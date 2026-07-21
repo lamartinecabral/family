@@ -1,0 +1,40 @@
+create table if not exists public.sobrenomes (
+  nome character varying not null,
+  freq_br integer not null,
+  freq_ac integer null,
+  freq_al integer null,
+  freq_am integer null,
+  freq_ap integer null,
+  freq_ba integer null,
+  freq_ce integer null,
+  freq_df integer null,
+  freq_es integer null,
+  freq_go integer null,
+  freq_ma integer null,
+  freq_mg integer null,
+  freq_ms integer null,
+  freq_mt integer null,
+  freq_pa integer null,
+  freq_pb integer null,
+  freq_pe integer null,
+  freq_pi integer null,
+  freq_pr integer null,
+  freq_rj integer null,
+  freq_ro integer null,
+  freq_rn integer null,
+  freq_rr integer null,
+  freq_rs integer null,
+  freq_sc integer null,
+  freq_se integer null,
+  freq_sp integer null,
+  freq_to integer null,
+  constraint sobrenomes_pkey primary key (nome)
+) TABLESPACE pg_default;
+
+create table if not exists public.localidades (
+  cod integer not null,
+  nome character varying not null,
+  uf character varying not null,
+  pop_local integer not null,
+  constraint localidades_pkey primary key (cod)
+) TABLESPACE pg_default;
