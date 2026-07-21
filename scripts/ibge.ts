@@ -16,7 +16,7 @@ export const sobrenomeRanking = async (page = 1, localidade = 0) => {
 
 export const sobrenomeData = async (sobrenome: string, localidade = 0) => {
   const url = `https://servicodados.ibge.gov.br/api/v3/nomes/2022/nome/${sobrenome}?tipo=sobrenome&localidade=${localidade}`;
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await sleep();
   const response = await fetch(url);
   const data = await response.json();
   return z
@@ -31,7 +31,7 @@ export const ufsData = async () => {
   const sobrenome = "silva";
   const localidade = 0;
   const url = `https://servicodados.ibge.gov.br/api/v3/nomes/2022/nome/${sobrenome}?tipo=sobrenome&localidade=${localidade}`;
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await sleep();
   const response = await fetch(url);
   const data = await response.json();
   return z
