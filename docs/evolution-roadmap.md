@@ -54,6 +54,10 @@ The initial data pipeline is complete.
   variable names and non-sensitive setup guidance.
 - Treat `scripts/schema.sql` as the current schema reference until versioned
   migrations replace it.
+- Run `npm run schema` to apply `scripts/schema.sql` to the configured Supabase
+  database.
+- Run `npm run gen-types` after schema changes to regenerate the Supabase
+  TypeScript definitions.
 - Run `node scripts/fetch-ibge-data.ts` to populate or resume the current data
   import.
 - Run `npm test` to execute the existing IBGE integration checks. These tests
