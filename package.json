@@ -8,16 +8,19 @@
     "node": ">=24.0.0"
   },
   "scripts": {
+    "schema": "node scripts/supabase-schema.ts",
     "gen-types": "node scripts/supabase-gen-types.ts",
     "test": "node --test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
     "dotenv": "^17.4.2",
+    "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
     "supabase": "^2.109.1"
   }
 }
