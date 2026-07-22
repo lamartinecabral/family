@@ -1,7 +1,7 @@
 import { supabase } from "./supabase.ts";
 import { sobrenomeRanking, sobrenomeData, ufsData } from "./ibge.ts";
 
-const fetchLocalidades = async (): ReturnType<typeof ufsData> => {
+const fetchLocalidades = async () => {
   const res = await supabase.from("localidades").select("*");
   if (res.data && res.data.length > 0) {
     console.log("Localidades already fetched.");

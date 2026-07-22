@@ -4,7 +4,11 @@
   "description": "",
   "license": "ISC",
   "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
+    "gen-types": "node scripts/supabase-gen-types.ts",
     "test": "node --test"
   },
   "dependencies": {
@@ -13,6 +17,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1"
+    "@types/node": "^26.1.1",
+    "supabase": "^2.109.1"
   }
 }

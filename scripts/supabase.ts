@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import { Database } from "./supabase.types.ts";
 
 dotenv.config({ quiet: true });
 
@@ -13,4 +14,4 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
