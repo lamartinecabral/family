@@ -1,3 +1,4 @@
 # family
 
-A Node.js project scaffold for the family workspace.
+A Node.js project that builds a Supabase dataset from Brazilian surname data
+provided by the IBGE API.
