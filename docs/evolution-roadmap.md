@@ -14,7 +14,7 @@ The initial data pipeline is complete.
 ### 1. Supabase Foundation
 
 - A Supabase project has been created.
-- `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are configured locally in
+- `SUPABASE_PROJECT_ID` and `SUPABASE_PUBLISHABLE_KEY` are configured locally in
   `.env`.
 - `scripts/supabase.ts` creates the shared Supabase client and fails early when
   either environment variable is missing.

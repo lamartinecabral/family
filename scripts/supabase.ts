@@ -1,17 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import { Database } from "./supabase.types.ts";
+import type { Database } from "./supabase.types.ts";
 
 dotenv.config({ quiet: true });
 
-const supabaseUrl = process.env.SUPABASE_URL;
+const projectId = process.env.SUPABASE_PROJECT_ID;
 const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
+if (!projectId || !supabaseKey) {
   throw new Error(
-    "SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY must be set in the environment variables.",
+    "SUPABASE_PROJECT_ID and SUPABASE_PUBLISHABLE_KEY must be set in the environment variables.",
   );
 }
 
 // Create a single supabase client for interacting with your database
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(
+  `https://${projectId}.supabase.co`,
+  supabaseKey,
+);
+
+export type Data<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
