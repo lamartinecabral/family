@@ -28,20 +28,10 @@ const fetchLocalidades = async () => {
 const fetchSobrenomes = async (
   localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
 ) => {
-  const populacaoBr = notNil(
-    localidades.find((loc) => loc.uf === "BR"),
-  ).pop_local;
-
   let page = 0;
   let keepFetching = true;
 
-  const ufCod = localidades.reduce(
-    (acc, loc) => {
-      acc[loc.uf] = loc.cod;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  const ufCod = keyValify(localidades, "uf", "cod");
 
   while (keepFetching) {
     page++;
@@ -78,33 +68,10 @@ const fetchSobrenomes = async (
         ];
         await supabase.from("frequencias").insert(frequencias);
 
-        const frequencias_analise: Omit<Data<"frequencias_analise">, "id">[] =
-          frequencias
-            .filter((f) => f.uf !== 0)
-            .map((f) => {
-              const localidade = notNil(
-                localidades.find((loc) => loc.cod === f.uf),
-              );
-
-              // porcentagem do total de indivíduos do grupo no estado
-              const share = f.frequencia / data.frequencia;
-
-              // proporção do grupo no estado
-              const concentracao = f.frequencia / localidade.pop_local;
-
-              // Compara a proporção do grupo no estado com a proporção nacional
-              const quociente_locacional =
-                concentracao / (data.frequencia / populacaoBr);
-
-              return {
-                nome: f.nome,
-                uf: f.uf,
-                frequencia: f.frequencia,
-                share,
-                concentracao,
-                quociente_locacional,
-              };
-            });
+        const frequencias_analise = getAnalysis(
+          { frequencias, data },
+          localidades,
+        );
         await supabase.from("frequencias_analise").insert(frequencias_analise);
 
         console.log(
@@ -137,23 +104,26 @@ const notNil = <T>(value: T | null | undefined): T => {
   return value;
 };
 
+const keyValify = <T, K extends keyof T, V extends keyof T>(
+  arr: T[],
+  keyProp: K,
+  valueProp: V,
+) =>
+  arr.reduce(
+    (acc, item) => {
+      acc[String(item[keyProp])] = item[valueProp];
+      return acc;
+    },
+    {} as Record<string, T[V]>,
+  );
+
 const fetchUFSobrenomes = async (
   localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
 ) => {
-  const populacaoBr = notNil(
-    localidades.find((loc) => loc.uf === "BR"),
-  ).pop_local;
-  localidades = localidades.filter((loc) => loc.uf !== "BR");
-
-  const ufCod = localidades.reduce(
-    (acc, loc) => {
-      acc[loc.uf] = loc.cod;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+  const ufCod = keyValify(localidades, "uf", "cod");
 
   for (const localidade of localidades) {
+    if (localidade.uf === "BR") continue;
     const cod = localidade.cod;
     let keepFetching = true;
     for (let page = 1; page <= 30 && keepFetching; page++) {
@@ -192,29 +162,10 @@ const fetchUFSobrenomes = async (
           ];
           await supabase.from("frequencias").insert(frequencias);
 
-          const frequencias_analise: Omit<Data<"frequencias_analise">, "id">[] =
-            frequencias
-              .filter((f) => f.uf !== 0)
-              .map((f) => {
-                // porcentagem do total de indivíduos do grupo no estado
-                const share = f.frequencia / data.frequencia;
-
-                // proporção do grupo no estado
-                const concentracao = f.frequencia / localidade.pop_local;
-
-                // Compara a proporção do grupo no estado com a proporção nacional
-                const quociente_locacional =
-                  concentracao / (data.frequencia / populacaoBr);
-
-                return {
-                  nome: f.nome,
-                  uf: f.uf,
-                  frequencia: f.frequencia,
-                  share,
-                  concentracao,
-                  quociente_locacional,
-                };
-              });
+          const frequencias_analise = getAnalysis(
+            { frequencias, data },
+            localidades,
+          );
           await supabase
             .from("frequencias_analise")
             .insert(frequencias_analise);
@@ -231,6 +182,48 @@ const fetchUFSobrenomes = async (
       }
     }
   }
+};
+
+const getAnalysis = (
+  sobrenome: {
+    frequencias: Omit<Data<"frequencias">, "id">[];
+    data: Awaited<ReturnType<typeof sobrenomeData>>;
+  },
+  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
+) => {
+  const { frequencias, data } = sobrenome;
+
+  const populacaoBr = notNil(
+    localidades.find((loc) => loc.uf === "BR"),
+  ).pop_local;
+
+  type FrequenciaAnalise = Omit<Data<"frequencias_analise">, "id">;
+  const frequencias_analise: FrequenciaAnalise[] = frequencias
+    .filter((f) => f.uf !== 0)
+    .map((f) => {
+      const localidade = notNil(localidades.find((loc) => loc.cod === f.uf));
+
+      // porcentagem do total de indivíduos do grupo no estado
+      const share = f.frequencia / data.frequencia;
+
+      // proporção do grupo no estado
+      const concentracao = f.frequencia / localidade.pop_local;
+
+      // Compara a proporção do grupo no estado com a proporção nacional
+      const quociente_locacional =
+        concentracao / (data.frequencia / populacaoBr);
+
+      return {
+        nome: f.nome,
+        uf: f.uf,
+        frequencia: f.frequencia,
+        share,
+        concentracao,
+        quociente_locacional,
+      };
+    });
+
+  return frequencias_analise;
 };
 
 async function main() {
