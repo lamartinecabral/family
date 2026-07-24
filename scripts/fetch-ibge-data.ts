@@ -8,6 +8,15 @@ const fetchLocalidades = async () => {
     return res.data;
   }
   const localidades = await withRetry(() => ufsData());
+
+  const br: (typeof localidades)[0] = {
+    cod: 0,
+    nome: "Brasil",
+    uf: "BR",
+    pop_local: localidades.reduce((acc, loc) => acc + loc.pop_local, 0),
+  };
+  localidades.unshift(br);
+
   await supabase.from("localidades").insert(localidades);
   console.log("Localidades fetched and inserted.");
   return localidades;
