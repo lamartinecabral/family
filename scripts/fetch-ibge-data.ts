@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "./supabase.ts";
+import type { Data } from "./supabase.ts";
 import { sobrenomeRanking, sobrenomeData, ufsData } from "./ibge.ts";
 
 const supabase = getSupabaseAdmin();
@@ -27,6 +28,10 @@ const fetchLocalidades = async () => {
 const fetchSobrenomes = async (
   localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
 ) => {
+  const populacaoBr = notNil(
+    localidades.find((loc) => loc.uf === "BR"),
+  ).pop_local;
+
   let page = 0;
   let keepFetching = true;
 
@@ -73,6 +78,35 @@ const fetchSobrenomes = async (
         ];
         await supabase.from("frequencias").insert(frequencias);
 
+        const frequencias_analise: Omit<Data<"frequencias_analise">, "id">[] =
+          frequencias
+            .filter((f) => f.uf !== 0)
+            .map((f) => {
+              const localidade = notNil(
+                localidades.find((loc) => loc.cod === f.uf),
+              );
+
+              // porcentagem do total de indivíduos do grupo no estado
+              const share = f.frequencia / data.frequencia;
+
+              // proporção do grupo no estado
+              const concentracao = f.frequencia / localidade.pop_local;
+
+              // Compara a proporção do grupo no estado com a proporção nacional
+              const quociente_locacional =
+                concentracao / (data.frequencia / populacaoBr);
+
+              return {
+                nome: f.nome,
+                uf: f.uf,
+                frequencia: f.frequencia,
+                share,
+                concentracao,
+                quociente_locacional,
+              };
+            });
+        await supabase.from("frequencias_analise").insert(frequencias_analise);
+
         console.log(
           `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
         );
@@ -96,9 +130,21 @@ const withRetry = async <T>(fn: () => Promise<T>, retries = 3): Promise<T> => {
   throw new Error("Unreachable code");
 };
 
+const notNil = <T>(value: T | null | undefined): T => {
+  if (value === null || value === undefined) {
+    throw new Error("Value is null or undefined");
+  }
+  return value;
+};
+
 const fetchUFSobrenomes = async (
   localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
 ) => {
+  const populacaoBr = notNil(
+    localidades.find((loc) => loc.uf === "BR"),
+  ).pop_local;
+  localidades = localidades.filter((loc) => loc.uf !== "BR");
+
   const ufCod = localidades.reduce(
     (acc, loc) => {
       acc[loc.uf] = loc.cod;
@@ -136,7 +182,7 @@ const fetchUFSobrenomes = async (
 
           await supabase.from("sobrenomes").insert({ nome: item.nome });
 
-          const frequencias = [
+          const frequencias: Omit<Data<"frequencias">, "id">[] = [
             { nome: item.nome, uf: 0, frequencia: data.frequencia },
             ...data.top_ufs.map((uf) => ({
               nome: item.nome,
@@ -145,6 +191,33 @@ const fetchUFSobrenomes = async (
             })),
           ];
           await supabase.from("frequencias").insert(frequencias);
+
+          const frequencias_analise: Omit<Data<"frequencias_analise">, "id">[] =
+            frequencias
+              .filter((f) => f.uf !== 0)
+              .map((f) => {
+                // porcentagem do total de indivíduos do grupo no estado
+                const share = f.frequencia / data.frequencia;
+
+                // proporção do grupo no estado
+                const concentracao = f.frequencia / localidade.pop_local;
+
+                // Compara a proporção do grupo no estado com a proporção nacional
+                const quociente_locacional =
+                  concentracao / (data.frequencia / populacaoBr);
+
+                return {
+                  nome: f.nome,
+                  uf: f.uf,
+                  frequencia: f.frequencia,
+                  share,
+                  concentracao,
+                  quociente_locacional,
+                };
+              });
+          await supabase
+            .from("frequencias_analise")
+            .insert(frequencias_analise);
 
           console.log(
             `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
