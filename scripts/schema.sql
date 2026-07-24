@@ -93,3 +93,8 @@ to public
 using (
   true
 );
+
+create index if not exists idx_frequencias_analise_uf_frequencia on public.frequencias_analise using btree (uf, frequencia);
+create index if not exists idx_frequencias_analise_uf_share on public.frequencias_analise using btree (uf, share);
+create index if not exists idx_frequencias_analise_uf_concentracao on public.frequencias_analise using btree (uf, concentracao);
+create index if not exists idx_frequencias_analise_uf_quociente_locacional on public.frequencias_analise using btree (uf, quociente_locacional);
