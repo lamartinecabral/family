@@ -50,6 +50,51 @@ export type Database = {
           },
         ]
       }
+      frequencias_analise: {
+        Row: {
+          concentracao: number
+          frequencia: number
+          id: number
+          nome: string
+          quociente_locacional: number
+          share: number
+          uf: number
+        }
+        Insert: {
+          concentracao: number
+          frequencia: number
+          id?: number
+          nome?: string
+          quociente_locacional: number
+          share: number
+          uf: number
+        }
+        Update: {
+          concentracao?: number
+          frequencia?: number
+          id?: number
+          nome?: string
+          quociente_locacional?: number
+          share?: number
+          uf?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frequencias_analise_nome_fkey"
+            columns: ["nome"]
+            isOneToOne: false
+            referencedRelation: "sobrenomes"
+            referencedColumns: ["nome"]
+          },
+          {
+            foreignKeyName: "frequencias_analise_uf_fkey"
+            columns: ["uf"]
+            isOneToOne: false
+            referencedRelation: "localidades"
+            referencedColumns: ["cod"]
+          },
+        ]
+      }
       localidades: {
         Row: {
           cod: number
