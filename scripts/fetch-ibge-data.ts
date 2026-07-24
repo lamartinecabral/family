@@ -1,5 +1,7 @@
-import { supabase } from "./supabase.ts";
+import { getSupabaseAdmin } from "./supabase.ts";
 import { sobrenomeRanking, sobrenomeData, ufsData } from "./ibge.ts";
+
+const supabase = getSupabaseAdmin();
 
 const fetchLocalidades = async () => {
   const res = await supabase.from("localidades").select("*");
@@ -22,9 +24,19 @@ const fetchLocalidades = async () => {
   return localidades;
 };
 
-const fetchSobrenomes = async () => {
+const fetchSobrenomes = async (
+  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
+) => {
   let page = 0;
   let keepFetching = true;
+
+  const ufCod = localidades.reduce(
+    (acc, loc) => {
+      acc[loc.uf] = loc.cod;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   while (keepFetching) {
     page++;
@@ -49,14 +61,17 @@ const fetchSobrenomes = async () => {
       try {
         const data = await withRetry(() => sobrenomeData(item.nome));
 
-        const doc: Record<string, any> = {
-          nome: item.nome,
-          freq_br: data.frequencia,
-        };
-        for (const uf of data.top_ufs) {
-          doc[`freq_${uf.uf.toLowerCase()}`] = uf.frequencia;
-        }
-        await supabase.from("sobrenomes").insert(doc);
+        await supabase.from("sobrenomes").insert({ nome: item.nome });
+
+        const frequencias = [
+          { nome: item.nome, uf: 0, frequencia: data.frequencia },
+          ...data.top_ufs.map((uf) => ({
+            nome: item.nome,
+            uf: ufCod[uf.uf],
+            frequencia: uf.frequencia,
+          })),
+        ];
+        await supabase.from("frequencias").insert(frequencias);
 
         console.log(
           `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
@@ -81,8 +96,17 @@ const withRetry = async <T>(fn: () => Promise<T>, retries = 3): Promise<T> => {
   throw new Error("Unreachable code");
 };
 
-const fetchUFSobrenomes = async () => {
-  const localidades = await fetchLocalidades();
+const fetchUFSobrenomes = async (
+  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
+) => {
+  const ufCod = localidades.reduce(
+    (acc, loc) => {
+      acc[loc.uf] = loc.cod;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+
   for (const localidade of localidades) {
     const cod = localidade.cod;
     let keepFetching = true;
@@ -110,14 +134,17 @@ const fetchUFSobrenomes = async () => {
 
           const data = await withRetry(() => sobrenomeData(item.nome));
 
-          const doc: Record<string, any> = {
-            nome: item.nome,
-            freq_br: data.frequencia,
-          };
-          for (const uf of data.top_ufs) {
-            doc[`freq_${uf.uf.toLowerCase()}`] = uf.frequencia;
-          }
-          await supabase.from("sobrenomes").insert(doc);
+          await supabase.from("sobrenomes").insert({ nome: item.nome });
+
+          const frequencias = [
+            { nome: item.nome, uf: 0, frequencia: data.frequencia },
+            ...data.top_ufs.map((uf) => ({
+              nome: item.nome,
+              uf: ufCod[uf.uf],
+              frequencia: uf.frequencia,
+            })),
+          ];
+          await supabase.from("frequencias").insert(frequencias);
 
           console.log(
             `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
@@ -134,8 +161,9 @@ const fetchUFSobrenomes = async () => {
 };
 
 async function main() {
-  await fetchSobrenomes();
-  await fetchUFSobrenomes();
+  const localidades = await fetchLocalidades();
+  await fetchSobrenomes(localidades);
+  await fetchUFSobrenomes(localidades);
 }
 
 main().catch((error) => {

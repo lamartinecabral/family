@@ -9,7 +9,7 @@
   },
   "scripts": {
     "schema": "node scripts/supabase-schema.ts",
-    "gen-types": "node scripts/supabase-gen-types.ts",
+    "typegen": "node scripts/supabase-typegen.ts",
     "test": "node --test"
   },
   "dependencies": {

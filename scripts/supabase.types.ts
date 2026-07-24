@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      frequencias: {
+        Row: {
+          frequencia: number
+          id: number
+          nome: string
+          uf: number
+        }
+        Insert: {
+          frequencia: number
+          id?: number
+          nome: string
+          uf: number
+        }
+        Update: {
+          frequencia?: number
+          id?: number
+          nome?: string
+          uf?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frequencias_nome_fkey"
+            columns: ["nome"]
+            isOneToOne: false
+            referencedRelation: "sobrenomes"
+            referencedColumns: ["nome"]
+          },
+          {
+            foreignKeyName: "frequencias_uf_fkey"
+            columns: ["uf"]
+            isOneToOne: false
+            referencedRelation: "localidades"
+            referencedColumns: ["cod"]
+          },
+        ]
+      }
       localidades: {
         Row: {
           cod: number
@@ -37,96 +73,12 @@ export type Database = {
       }
       sobrenomes: {
         Row: {
-          freq_ac: number | null
-          freq_al: number | null
-          freq_am: number | null
-          freq_ap: number | null
-          freq_ba: number | null
-          freq_br: number
-          freq_ce: number | null
-          freq_df: number | null
-          freq_es: number | null
-          freq_go: number | null
-          freq_ma: number | null
-          freq_mg: number | null
-          freq_ms: number | null
-          freq_mt: number | null
-          freq_pa: number | null
-          freq_pb: number | null
-          freq_pe: number | null
-          freq_pi: number | null
-          freq_pr: number | null
-          freq_rj: number | null
-          freq_rn: number | null
-          freq_ro: number | null
-          freq_rr: number | null
-          freq_rs: number | null
-          freq_sc: number | null
-          freq_se: number | null
-          freq_sp: number | null
-          freq_to: number | null
           nome: string
         }
         Insert: {
-          freq_ac?: number | null
-          freq_al?: number | null
-          freq_am?: number | null
-          freq_ap?: number | null
-          freq_ba?: number | null
-          freq_br: number
-          freq_ce?: number | null
-          freq_df?: number | null
-          freq_es?: number | null
-          freq_go?: number | null
-          freq_ma?: number | null
-          freq_mg?: number | null
-          freq_ms?: number | null
-          freq_mt?: number | null
-          freq_pa?: number | null
-          freq_pb?: number | null
-          freq_pe?: number | null
-          freq_pi?: number | null
-          freq_pr?: number | null
-          freq_rj?: number | null
-          freq_rn?: number | null
-          freq_ro?: number | null
-          freq_rr?: number | null
-          freq_rs?: number | null
-          freq_sc?: number | null
-          freq_se?: number | null
-          freq_sp?: number | null
-          freq_to?: number | null
           nome: string
         }
         Update: {
-          freq_ac?: number | null
-          freq_al?: number | null
-          freq_am?: number | null
-          freq_ap?: number | null
-          freq_ba?: number | null
-          freq_br?: number
-          freq_ce?: number | null
-          freq_df?: number | null
-          freq_es?: number | null
-          freq_go?: number | null
-          freq_ma?: number | null
-          freq_mg?: number | null
-          freq_ms?: number | null
-          freq_mt?: number | null
-          freq_pa?: number | null
-          freq_pb?: number | null
-          freq_pe?: number | null
-          freq_pi?: number | null
-          freq_pr?: number | null
-          freq_rj?: number | null
-          freq_rn?: number | null
-          freq_ro?: number | null
-          freq_rr?: number | null
-          freq_rs?: number | null
-          freq_sc?: number | null
-          freq_se?: number | null
-          freq_sp?: number | null
-          freq_to?: number | null
           nome?: string
         }
         Relationships: []
