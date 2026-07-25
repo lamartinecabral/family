@@ -9,8 +9,9 @@
   },
   "scripts": {
     "schema": "node scripts/supabase-schema.ts",
-    "typegen": "node scripts/supabase-typegen.ts",
-    "test": "node --test"
+    "start": "python3 -m http.server 8000 --directory dist",
+    "test": "node --test",
+    "typegen": "node scripts/supabase-typegen.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
@@ -21,6 +22,8 @@
   "devDependencies": {
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
     "supabase": "^2.109.1"
   }
 }
