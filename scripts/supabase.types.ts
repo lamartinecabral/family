@@ -18,35 +18,35 @@ export type Database = {
         Row: {
           frequencia: number
           id: number
+          localidade: number
           nome: string
-          uf: number
         }
         Insert: {
           frequencia: number
           id?: number
+          localidade: number
           nome: string
-          uf: number
         }
         Update: {
           frequencia?: number
           id?: number
+          localidade?: number
           nome?: string
-          uf?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "frequencias_localidade_fkey"
+            columns: ["localidade"]
+            isOneToOne: false
+            referencedRelation: "localidades"
+            referencedColumns: ["cod"]
+          },
           {
             foreignKeyName: "frequencias_nome_fkey"
             columns: ["nome"]
             isOneToOne: false
             referencedRelation: "sobrenomes"
             referencedColumns: ["nome"]
-          },
-          {
-            foreignKeyName: "frequencias_uf_fkey"
-            columns: ["uf"]
-            isOneToOne: false
-            referencedRelation: "localidades"
-            referencedColumns: ["cod"]
           },
         ]
       }
@@ -55,43 +55,43 @@ export type Database = {
           concentracao: number
           frequencia: number
           id: number
+          localidade: number
           nome: string
           quociente_locacional: number
           share: number
-          uf: number
         }
         Insert: {
           concentracao: number
           frequencia: number
           id?: number
+          localidade: number
           nome?: string
           quociente_locacional: number
           share: number
-          uf: number
         }
         Update: {
           concentracao?: number
           frequencia?: number
           id?: number
+          localidade?: number
           nome?: string
           quociente_locacional?: number
           share?: number
-          uf?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "frequencias_analise_localidade_fkey"
+            columns: ["localidade"]
+            isOneToOne: false
+            referencedRelation: "localidades"
+            referencedColumns: ["cod"]
+          },
           {
             foreignKeyName: "frequencias_analise_nome_fkey"
             columns: ["nome"]
             isOneToOne: false
             referencedRelation: "sobrenomes"
             referencedColumns: ["nome"]
-          },
-          {
-            foreignKeyName: "frequencias_analise_uf_fkey"
-            columns: ["uf"]
-            isOneToOne: false
-            referencedRelation: "localidades"
-            referencedColumns: ["cod"]
           },
         ]
       }

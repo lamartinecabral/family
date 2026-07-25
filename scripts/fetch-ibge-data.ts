@@ -1,11 +1,12 @@
 import { getSupabaseAdmin } from "./supabase.ts";
-import type { Data } from "./supabase.ts";
 import { sobrenomeRanking, sobrenomeData, ufsData } from "./ibge.ts";
+
+import type { Data } from "./supabase.ts";
 
 const supabase = getSupabaseAdmin();
 
 const fetchLocalidades = async () => {
-  const res = await supabase.from("localidades").select("*");
+  const res = await supabase.from("localidades").select("*").throwOnError();
   if (res.data && res.data.length > 0) {
     console.log("Localidades already fetched.");
     return res.data;
@@ -20,7 +21,7 @@ const fetchLocalidades = async () => {
   };
   localidades.unshift(br);
 
-  await supabase.from("localidades").insert(localidades);
+  await supabase.from("localidades").insert(localidades).throwOnError();
   console.log("Localidades fetched and inserted.");
   return localidades;
 };
@@ -35,13 +36,13 @@ const fetchSobrenomes = async (
 
   while (keepFetching) {
     page++;
+    if (page > 1) break;
     const ranking = await withRetry(() => sobrenomeRanking(page));
 
     const filters = ranking.map((item) => `nome.eq.${item.nome}`).join(",");
-    const existent =
-      (await supabase.from("sobrenomes").select("*").or(filters)).data?.map(
-        (item) => item.nome,
-      ) || [];
+    const existent = (
+      await supabase.from("sobrenomes").select("*").or(filters).throwOnError()
+    ).data.map((item) => item.nome);
 
     for (const item of ranking) {
       if (existent.includes(item.nome)) {
@@ -56,23 +57,29 @@ const fetchSobrenomes = async (
       try {
         const data = await withRetry(() => sobrenomeData(item.nome));
 
-        await supabase.from("sobrenomes").insert({ nome: item.nome });
+        await supabase
+          .from("sobrenomes")
+          .insert({ nome: item.nome })
+          .throwOnError();
 
         const frequencias = [
-          { nome: item.nome, uf: 0, frequencia: data.frequencia },
+          { nome: item.nome, localidade: 0, frequencia: data.frequencia },
           ...data.top_ufs.map((uf) => ({
             nome: item.nome,
-            uf: ufCod[uf.uf],
+            localidade: ufCod[uf.uf],
             frequencia: uf.frequencia,
           })),
         ];
-        await supabase.from("frequencias").insert(frequencias);
+        await supabase.from("frequencias").insert(frequencias).throwOnError();
 
         const frequencias_analise = getAnalysis(
           { frequencias, data },
           localidades,
         );
-        await supabase.from("frequencias_analise").insert(frequencias_analise);
+        await supabase
+          .from("frequencias_analise")
+          .insert(frequencias_analise)
+          .throwOnError();
 
         console.log(
           `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
@@ -82,6 +89,125 @@ const fetchSobrenomes = async (
       }
     }
   }
+};
+
+const fetchUFSobrenomes = async (
+  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
+) => {
+  const ufCod = keyValify(localidades, "uf", "cod");
+
+  for (const localidade of localidades) {
+    if (localidade.uf === "BR") continue;
+    const cod = localidade.cod;
+    let keepFetching = true;
+    for (let page = 1; page <= 30 && keepFetching; page++) {
+      try {
+        console.log(`Fetching ranking for uf ${localidade.uf} on page ${page}`);
+        const ranking = await withRetry(() => sobrenomeRanking(page, cod));
+        if (ranking.length === 0) break;
+
+        const filters = ranking.map((item) => `nome.eq.${item.nome}`).join(",");
+        const existent = (
+          await supabase
+            .from("sobrenomes")
+            .select("*")
+            .or(filters)
+            .throwOnError()
+        ).data.map((item) => item.nome);
+
+        for (const item of ranking) {
+          if (existent.includes(item.nome)) {
+            continue;
+          }
+
+          if (item.frequencia < 1000) {
+            keepFetching = false;
+            break;
+          }
+
+          const data = await withRetry(() => sobrenomeData(item.nome));
+
+          await supabase
+            .from("sobrenomes")
+            .insert({ nome: item.nome })
+            .throwOnError();
+
+          const frequencias: Omit<Data<"frequencias">, "id">[] = [
+            { nome: item.nome, localidade: 0, frequencia: data.frequencia },
+            ...data.top_ufs.map((uf) => ({
+              nome: item.nome,
+              localidade: ufCod[uf.uf],
+              frequencia: uf.frequencia,
+            })),
+          ];
+          await supabase.from("frequencias").insert(frequencias).throwOnError();
+
+          const frequencias_analise = getAnalysis(
+            { frequencias, data },
+            localidades,
+          );
+          await supabase
+            .from("frequencias_analise")
+            .insert(frequencias_analise)
+            .throwOnError();
+
+          console.log(
+            `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Failed to fetch ranking for uf ${localidade.uf} on page ${page}:`,
+          error,
+        );
+      }
+    }
+    break;
+  }
+};
+
+const getAnalysis = (
+  sobrenome: {
+    frequencias: Omit<Data<"frequencias">, "id">[];
+    data: Awaited<ReturnType<typeof sobrenomeData>>;
+  },
+  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
+) => {
+  const { frequencias, data } = sobrenome;
+
+  const populacaoBr = notNil(
+    localidades.find((loc) => loc.uf === "BR"),
+  ).pop_local;
+
+  type FrequenciaAnalise = Omit<Data<"frequencias_analise">, "id">;
+  const frequencias_analise: FrequenciaAnalise[] = frequencias
+    .filter((f) => f.localidade !== 0)
+    .map((f) => {
+      const localidade = notNil(
+        localidades.find((loc) => loc.cod === f.localidade),
+      );
+
+      // porcentagem do total de indivíduos do grupo no estado
+      const share = f.frequencia / data.frequencia;
+
+      // proporção do grupo no estado
+      const concentracao = f.frequencia / localidade.pop_local;
+
+      // Compara a proporção do grupo no estado com a proporção nacional
+      const quociente_locacional =
+        concentracao / (data.frequencia / populacaoBr);
+
+      return {
+        nome: f.nome,
+        localidade: f.localidade,
+        frequencia: f.frequencia,
+        share,
+        concentracao,
+        quociente_locacional,
+      };
+    });
+
+  return frequencias_analise;
 };
 
 const withRetry = async <T>(fn: () => Promise<T>, retries = 3): Promise<T> => {
@@ -116,115 +242,6 @@ const keyValify = <T, K extends keyof T, V extends keyof T>(
     },
     {} as Record<string, T[V]>,
   );
-
-const fetchUFSobrenomes = async (
-  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
-) => {
-  const ufCod = keyValify(localidades, "uf", "cod");
-
-  for (const localidade of localidades) {
-    if (localidade.uf === "BR") continue;
-    const cod = localidade.cod;
-    let keepFetching = true;
-    for (let page = 1; page <= 30 && keepFetching; page++) {
-      try {
-        console.log(`Fetching ranking for uf ${localidade.uf} on page ${page}`);
-        const ranking = await withRetry(() => sobrenomeRanking(page, cod));
-        if (ranking.length === 0) break;
-
-        const filters = ranking.map((item) => `nome.eq.${item.nome}`).join(",");
-        const existent =
-          (await supabase.from("sobrenomes").select("*").or(filters)).data?.map(
-            (item) => item.nome,
-          ) || [];
-
-        for (const item of ranking) {
-          if (existent.includes(item.nome)) {
-            continue;
-          }
-
-          if (item.frequencia < 1000) {
-            keepFetching = false;
-            break;
-          }
-
-          const data = await withRetry(() => sobrenomeData(item.nome));
-
-          await supabase.from("sobrenomes").insert({ nome: item.nome });
-
-          const frequencias: Omit<Data<"frequencias">, "id">[] = [
-            { nome: item.nome, uf: 0, frequencia: data.frequencia },
-            ...data.top_ufs.map((uf) => ({
-              nome: item.nome,
-              uf: ufCod[uf.uf],
-              frequencia: uf.frequencia,
-            })),
-          ];
-          await supabase.from("frequencias").insert(frequencias);
-
-          const frequencias_analise = getAnalysis(
-            { frequencias, data },
-            localidades,
-          );
-          await supabase
-            .from("frequencias_analise")
-            .insert(frequencias_analise);
-
-          console.log(
-            `Sobrenome ${item.nome} inserted. (pop: ${item.frequencia})`,
-          );
-        }
-      } catch (error) {
-        console.error(
-          `Failed to fetch ranking for uf ${localidade.uf} on page ${page}:`,
-          error,
-        );
-      }
-    }
-  }
-};
-
-const getAnalysis = (
-  sobrenome: {
-    frequencias: Omit<Data<"frequencias">, "id">[];
-    data: Awaited<ReturnType<typeof sobrenomeData>>;
-  },
-  localidades: Awaited<ReturnType<typeof fetchLocalidades>>,
-) => {
-  const { frequencias, data } = sobrenome;
-
-  const populacaoBr = notNil(
-    localidades.find((loc) => loc.uf === "BR"),
-  ).pop_local;
-
-  type FrequenciaAnalise = Omit<Data<"frequencias_analise">, "id">;
-  const frequencias_analise: FrequenciaAnalise[] = frequencias
-    .filter((f) => f.uf !== 0)
-    .map((f) => {
-      const localidade = notNil(localidades.find((loc) => loc.cod === f.uf));
-
-      // porcentagem do total de indivíduos do grupo no estado
-      const share = f.frequencia / data.frequencia;
-
-      // proporção do grupo no estado
-      const concentracao = f.frequencia / localidade.pop_local;
-
-      // Compara a proporção do grupo no estado com a proporção nacional
-      const quociente_locacional =
-        concentracao / (data.frequencia / populacaoBr);
-
-      return {
-        nome: f.nome,
-        uf: f.uf,
-        frequencia: f.frequencia,
-        share,
-        concentracao,
-        quociente_locacional,
-      };
-    });
-
-  return frequencias_analise;
-};
 
 async function main() {
   const localidades = await fetchLocalidades();
