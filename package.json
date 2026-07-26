@@ -10,7 +10,7 @@
   "scripts": {
     "db:apply": "node scripts/apply-schema.ts",
     "db:types": "node scripts/generate-db-types.ts",
-    "populate": "node scripts/fetch-ibge-data.ts",
+    "db:populate": "node scripts/populate-ibge-data.ts",
     "start": "python3 -m http.server 8000 --directory docs",
     "test": "node --test",
     "typecheck": "tsc --noEmit"
