@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import type { Database } from "./supabase.types.ts";
+import type { Database } from "./generated/db.types.ts";
 
 dotenv.config({ quiet: true });
 

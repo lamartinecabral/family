@@ -9,6 +9,7 @@
   },
   "scripts": {
     "schema": "node scripts/supabase-schema.ts",
+    "populate": "node scripts/fetch-ibge-data.ts",
     "start": "python3 -m http.server 8000 --directory docs",
     "test": "node --test",
     "typecheck": "tsc --noEmit",

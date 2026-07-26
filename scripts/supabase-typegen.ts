@@ -11,7 +11,7 @@ if (!supabaseProjectId) {
   );
 }
 
-const command = `npx supabase gen types typescript --project-id "${supabaseProjectId}" --schema public > scripts/supabase.types.ts`;
+const command = `npx supabase gen types typescript --project-id "${supabaseProjectId}" --schema public > src/generated/db.types.ts`;
 
 try {
   execSync(command, { stdio: "inherit" });

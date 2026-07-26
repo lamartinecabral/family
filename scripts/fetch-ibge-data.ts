@@ -1,7 +1,7 @@
-import { getSupabaseAdmin } from "./supabase.ts";
-import { sobrenomeRanking, sobrenomeData, ufsData } from "./ibge.ts";
+import { getSupabaseAdmin } from "../src/supabase.ts";
+import { sobrenomeRanking, sobrenomeData, ufsData } from "../src/ibge.ts";
 
-import type { Data } from "./supabase.ts";
+import type { Data } from "../src/supabase.ts";
 
 const supabase = getSupabaseAdmin();
 
