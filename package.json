@@ -9,23 +9,21 @@
   },
   "scripts": {
     "schema": "node scripts/supabase-schema.ts",
-    "start": "python3 -m http.server 8000 --directory dist",
+    "start": "python3 -m http.server 8000 --directory docs",
     "test": "node --test",
     "typecheck": "tsc --noEmit",
     "typegen": "node scripts/supabase-typegen.ts"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.110.7",
-    "dotenv": "^17.4.2",
-    "pg": "^8.22.0",
-    "zod": "^4.4.3"
-  },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.110.7",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
+    "dotenv": "^17.4.2",
+    "pg": "^8.22.0",
     "supabase": "^2.109.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
   }
 }
