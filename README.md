@@ -1,6 +1,6 @@
-# Family
+# Nomes da Terra
 
-Family analyzes the predominance of surnames in each Brazilian state.
+Nomes da Terra analyzes the predominance of surnames in each Brazilian state.
 
 It collects surname data from the IBGE API, stores it in Supabase, and presents
 the results in a static web application. The goal is to make it easy to explore

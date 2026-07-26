@@ -1,6 +1,6 @@
 # Project Evolution
 
-This document records the development of **Family**, a project that explores
+This document records the development of **Nomes da Terra**, a project that explores
 which surnames are most characteristic of each Brazilian state using data from
 the 2022 IBGE Census. The implementation follows a pipeline: collect source
 data from IBGE, persist and analyse it in Supabase, then publish a static
