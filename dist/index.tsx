@@ -1,18 +1,15 @@
-import React, { createRoot } from "./react.mjs";
+import React, { useState, useEffect, useMemo, createRoot } from "./react.mjs";
 
 import {
   Search,
   ChevronDown,
   ChevronUp,
-  Info,
   MapPin,
   TrendingUp,
   Users,
-  Filter,
   Award,
   BookOpen,
   Sparkles,
-  ArrowUpDown,
   X,
   Layers,
   ChevronLeft,
@@ -93,34 +90,30 @@ const format = (val: unknown, fractionDigits?: number) => {
 };
 
 export default function App() {
-  const [selectedUf, setSelectedUf] = React.useState("CE");
-  const [rankingPage, setRankingPage] = React.useState(0);
-  const [totalStateFrequencies, setTotalStateFrequencies] = React.useState(0);
-  const [localidades, setLocalidades] = React.useState<Localidade[]>([]);
-  const [stateFrequencies, setStateFrequencies] = React.useState<Frequencia[]>(
-    [],
-  );
-  const [nationwideFrequencies, setNationwideFrequencies] = React.useState<
+  const [selectedUf, setSelectedUf] = useState("CE");
+  const [rankingPage, setRankingPage] = useState(0);
+  const [totalStateFrequencies, setTotalStateFrequencies] = useState(0);
+  const [localidades, setLocalidades] = useState<Localidade[]>([]);
+  const [stateFrequencies, setStateFrequencies] = useState<Frequencia[]>([]);
+  const [nationwideFrequencies, setNationwideFrequencies] = useState<
     Frequencia[]
   >([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isLoadingNationwide, setIsLoadingNationwide] = React.useState(false);
-  const [dataError, setDataError] = React.useState<string | null>(null);
-  const [expandedSurname, setExpandedSurname] = React.useState<string | null>(
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingNationwide, setIsLoadingNationwide] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [expandedSurname, setExpandedSurname] = useState<string | null>(null);
+  const [detailSource, setDetailSource] = useState<"ranking" | "search" | null>(
     null,
   );
-  const [detailSource, setDetailSource] = React.useState<
-    "ranking" | "search" | null
-  >(null);
-  const [surnameQuery, setSurnameQuery] = React.useState("");
-  const [surnameSearchError, setSurnameSearchError] = React.useState<
-    string | null
-  >(null);
-  const [isSearchingSurname, setIsSearchingSurname] = React.useState(false);
-  const [selectedRegion, setSelectedRegion] = React.useState("Todas");
-  const [showInfoModal, setShowInfoModal] = React.useState(false);
+  const [surnameQuery, setSurnameQuery] = useState("");
+  const [surnameSearchError, setSurnameSearchError] = useState<string | null>(
+    null,
+  );
+  const [isSearchingSurname, setIsSearchingSurname] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState("Todas");
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isCurrent = true;
 
     const loadLocalidades = async () => {
@@ -151,7 +144,7 @@ export default function App() {
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const localidade = localidades.find((item) => item.uf === selectedUf);
     if (localidade?.cod === undefined) return;
     const localidadeCod = localidade.cod;
@@ -197,7 +190,7 @@ export default function App() {
     };
   }, [localidades, rankingPage, selectedUf]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!expandedSurname) {
       setNationwideFrequencies([]);
       return;
@@ -248,23 +241,23 @@ export default function App() {
     };
   }, [expandedSurname, localidades]);
 
-  const populacaoBrasil = React.useMemo(() => {
+  const populacaoBrasil = useMemo(() => {
     return localidades.reduce((acc, curr) => acc + curr.pop_local, 0);
   }, [localidades]);
 
   /* Current State metadata */
-  const currentStateInfo = React.useMemo(() => {
+  const currentStateInfo = useMemo(() => {
     return localidades.find((l) => l.uf === selectedUf) || localidades[0];
   }, [localidades, selectedUf]);
 
   /* Filtered list of UFs for header quick selection */
-  const filteredStates = React.useMemo(() => {
+  const filteredStates = useMemo(() => {
     if (selectedRegion === "Todas") return localidades;
     return localidades.filter((l) => l.regiao === selectedRegion);
   }, [localidades, selectedRegion]);
 
   /* Ranking table calculation for selected UF */
-  const stateRanking = React.useMemo(() => {
+  const stateRanking = useMemo(() => {
     let list = stateFrequencies;
 
     return list.map((item, index) => ({
@@ -281,7 +274,7 @@ export default function App() {
   );
 
   /* Top typical surname stats for dashboard highlight */
-  const topTypicalSurname = React.useMemo(() => {
+  const topTypicalSurname = useMemo(() => {
     if (stateRanking.length === 0) return null;
     return stateRanking[0];
   }, [stateRanking]);
