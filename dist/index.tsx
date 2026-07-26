@@ -18,16 +18,12 @@ import {
   HelpCircle,
 } from "./lucide-react.mjs";
 
-import { createClient } from "./supabase.mjs";
-import type { Database } from "../scripts/supabase.types.ts";
-
-const projectId = "";
-const supabaseKey = "";
-
-const supabase = createClient<Database>(
-  `https://${projectId}.supabase.co`,
-  supabaseKey,
-);
+import {
+  queryLocalidades,
+  queryNationWideDetails,
+  queryStateRanking,
+  querySurname,
+} from "./query.mjs";
 
 type Localidade = {
   cod?: number;
@@ -117,11 +113,7 @@ export default function App() {
     let isCurrent = true;
 
     const loadLocalidades = async () => {
-      const { data, error } = await supabase
-        .from("localidades")
-        .select("cod, nome, uf, pop_local")
-        .neq("uf", "BR")
-        .order("nome");
+      const { data, error } = await queryLocalidades();
 
       if (!isCurrent) return;
       if (error) {
@@ -154,17 +146,11 @@ export default function App() {
     setDataError(null);
 
     const loadStateRanking = async () => {
-      const { data, error, count } = await supabase
-        .from("frequencias_analise")
-        .select("nome, localidade, frequencia, quociente_locacional", {
-          count: "exact",
-        })
-        .eq("localidade", localidadeCod)
-        .order("quociente_locacional", { ascending: false })
-        .range(
-          rankingPage * RANKING_PAGE_SIZE,
-          (rankingPage + 1) * RANKING_PAGE_SIZE - 1,
-        );
+      const { data, error, count } = await queryStateRanking(
+        localidadeCod,
+        rankingPage,
+        RANKING_PAGE_SIZE,
+      );
 
       if (!isCurrent) return;
       if (error) {
@@ -200,11 +186,7 @@ export default function App() {
     setIsLoadingNationwide(true);
 
     const loadNationwideDetails = async () => {
-      const { data, error } = await supabase
-        .from("frequencias_analise")
-        .select("nome, localidade, frequencia, quociente_locacional")
-        .eq("nome", expandedSurname)
-        .order("quociente_locacional", { ascending: false });
+      const { data, error } = await queryNationWideDetails(expandedSurname);
 
       if (!isCurrent) return;
       if (error) {
@@ -299,11 +281,7 @@ export default function App() {
     setIsSearchingSurname(true);
     setSurnameSearchError(null);
 
-    const { data, error } = await supabase
-      .from("frequencias_analise")
-      .select("nome")
-      .ilike("nome", query)
-      .limit(1);
+    const { data, error } = await querySurname(query);
 
     if (error) {
       setSurnameSearchError("Não foi possível pesquisar este sobrenome.");
