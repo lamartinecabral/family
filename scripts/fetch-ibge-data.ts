@@ -36,7 +36,6 @@ const fetchSobrenomes = async (
 
   while (keepFetching) {
     page++;
-    if (page > 1) break;
     const ranking = await withRetry(() => sobrenomeRanking(page));
 
     const filters = ranking.map((item) => `nome.eq.${item.nome}`).join(",");
@@ -162,7 +161,6 @@ const fetchUFSobrenomes = async (
         );
       }
     }
-    break;
   }
 };
 
