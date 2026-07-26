@@ -9,11 +9,11 @@
   },
   "scripts": {
     "db:apply": "node scripts/apply-schema.ts",
+    "db:types": "node scripts/generate-db-types.ts",
     "populate": "node scripts/fetch-ibge-data.ts",
     "start": "python3 -m http.server 8000 --directory docs",
     "test": "node --test",
-    "typecheck": "tsc --noEmit",
-    "typegen": "node scripts/supabase-typegen.ts"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.110.7",
