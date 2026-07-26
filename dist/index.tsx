@@ -841,6 +841,8 @@ export default function App() {
                     setExpandedSurname(null);
                     setDetailSource(null);
                     setSurnameSearchError(null);
+                    setSurnameQuery("");
+                    setSurnameSearchError(null);
                   }}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-100"
                   aria-label="Fechar detalhes do sobrenome"
