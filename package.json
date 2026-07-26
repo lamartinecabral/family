@@ -11,6 +11,7 @@
     "schema": "node scripts/supabase-schema.ts",
     "start": "python3 -m http.server 8000 --directory dist",
     "test": "node --test",
+    "typecheck": "tsc --noEmit",
     "typegen": "node scripts/supabase-typegen.ts"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
-    "supabase": "^2.109.1"
+    "supabase": "^2.109.1",
+    "typescript": "^6.0.3"
   }
 }
