@@ -282,11 +282,6 @@ export default function App() {
     return stateRanking[0];
   }, [stateRanking]);
 
-  /* Total statistics for current state */
-  const totalAnalyzedInUf = React.useMemo(() => {
-    return stateFrequencies.reduce((acc, curr) => acc + curr.frequencia, 0);
-  }, [stateFrequencies]);
-
   /* Helper to toggle row expansion */
   const toggleExpand = (sobrenome: string) => {
     if (expandedSurname === sobrenome) {
@@ -729,22 +724,30 @@ export default function App() {
             </p>
           </div>
 
-          {/* Total Sampled in Database */}
+          {/* Local Presence of the Top Typical Surname */}
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
                 <Users className="w-3.5 h-3.5 text-emerald-600" />
-                Amostra Mapeada em {currentStateInfo.uf}
+                Presença em {currentStateInfo.uf}
               </span>
               <div className="mt-1">
-                <span className="text-2xl font-black text-slate-900 font-mono">
-                  {format(totalAnalyzedInUf)}
+                <span className="text-2xl font-black text-emerald-700 font-mono">
+                  {topTypicalSurname
+                    ? `${format(+topTypicalSurname.percentLocal)}%`
+                    : "—"}
                 </span>
-                <span className="text-xs text-slate-500 ml-1">pessoas</span>
+                {topTypicalSurname && (
+                  <span className="text-xs text-slate-500 ml-1">
+                    da população
+                  </span>
+                )}
               </div>
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              Somatório das famílias em destaque no banco do Censo.
+              {topTypicalSurname
+                ? `${format(topTypicalSurname.frequencia)} pessoas com o sobrenome ${topTypicalSurname.sobrenome} no Censo 2022.`
+                : "Nenhum resultado para os filtros atuais."}
             </p>
           </div>
         </section>
