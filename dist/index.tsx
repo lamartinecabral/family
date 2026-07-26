@@ -109,6 +109,14 @@ export default function App() {
   const [expandedSurname, setExpandedSurname] = React.useState<string | null>(
     null,
   );
+  const [detailSource, setDetailSource] = React.useState<
+    "ranking" | "search" | null
+  >(null);
+  const [surnameQuery, setSurnameQuery] = React.useState("");
+  const [surnameSearchError, setSurnameSearchError] = React.useState<
+    string | null
+  >(null);
+  const [isSearchingSurname, setIsSearchingSurname] = React.useState(false);
   const [selectedRegion, setSelectedRegion] = React.useState("Todas");
   const [showInfoModal, setShowInfoModal] = React.useState(false);
 
@@ -280,11 +288,41 @@ export default function App() {
 
   /* Helper to toggle row expansion */
   const toggleExpand = (sobrenome: string) => {
-    if (expandedSurname === sobrenome) {
+    if (expandedSurname === sobrenome && detailSource === "ranking") {
       setExpandedSurname(null);
+      setDetailSource(null);
     } else {
       setExpandedSurname(sobrenome);
+      setDetailSource("ranking");
     }
+  };
+
+  const searchSurname = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = surnameQuery.trim();
+
+    if (!query) return;
+
+    setIsSearchingSurname(true);
+    setSurnameSearchError(null);
+
+    const { data, error } = await supabase
+      .from("frequencias_analise")
+      .select("nome")
+      .ilike("nome", query)
+      .limit(1);
+
+    if (error) {
+      setSurnameSearchError("Não foi possível pesquisar este sobrenome.");
+    } else if (!data?.[0]) {
+      setSurnameSearchError("Sobrenome não encontrado na base disponível.");
+    } else {
+      setExpandedSurname(data[0].nome);
+      setDetailSource("search");
+      setSurnameQuery(data[0].nome);
+    }
+
+    setIsSearchingSurname(false);
   };
 
   const renderNationwideDetails = (sobrenome: string) => {
@@ -628,6 +666,7 @@ export default function App() {
                     setSelectedUf(st.uf);
                     setRankingPage(0);
                     setExpandedSurname(null);
+                    setDetailSource(null);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
                     isSelected
@@ -766,7 +805,61 @@ export default function App() {
                 </p>
               </div>
             </div>
+            <form
+              onSubmit={searchSurname}
+              className="flex flex-col gap-2 sm:flex-row sm:items-center"
+            >
+              <label className="sr-only" htmlFor="surname-search">
+                Pesquisar sobrenome
+              </label>
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  id="surname-search"
+                  type="search"
+                  value={surnameQuery}
+                  onChange={(event) => {
+                    setSurnameQuery(event.target.value);
+                    setSurnameSearchError(null);
+                  }}
+                  placeholder="Pesquisar um sobrenome"
+                  className="w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSearchingSurname || !surnameQuery.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-900 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Search className="h-4 w-4" />
+                {isSearchingSurname ? "Pesquisando..." : "Pesquisar"}
+              </button>
+              {detailSource === "search" && expandedSurname && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setExpandedSurname(null);
+                    setDetailSource(null);
+                    setSurnameSearchError(null);
+                  }}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-100"
+                  aria-label="Fechar detalhes do sobrenome"
+                  title="Fechar detalhes"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </form>
+            {surnameSearchError && (
+              <p className="text-xs text-red-700">{surnameSearchError}</p>
+            )}
           </div>
+
+          {detailSource === "search" && expandedSurname && (
+            <div className="border-b border-slate-300">
+              {renderNationwideDetails(expandedSurname)}
+            </div>
+          )}
 
           {}
           <div className="overflow-x-auto">
@@ -798,7 +891,9 @@ export default function App() {
                   </tr>
                 ) : (
                   stateRanking.map((row) => {
-                    const isExpanded = expandedSurname === row.sobrenome;
+                    const isExpanded =
+                      detailSource === "ranking" &&
+                      expandedSurname === row.sobrenome;
 
                     /* Visual indicator color according to QL intensity */
                     let qlBadgeClass =
@@ -922,6 +1017,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setExpandedSurname(null);
+                  setDetailSource(null);
                   setRankingPage((page) => page - 1);
                 }}
                 disabled={rankingPage === 0 || isLoading}
@@ -938,6 +1034,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setExpandedSurname(null);
+                  setDetailSource(null);
                   setRankingPage((page) => page + 1);
                 }}
                 disabled={isLoading || rankingPage + 1 >= totalRankingPages}
