@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useMemo, createRoot } from "./react.mjs";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  createRoot,
+} from "./assets/react.mjs";
 
 import {
   Search,
@@ -16,7 +21,7 @@ import {
   ChevronRight,
   BarChart2,
   HelpCircle,
-} from "./lucide-react.mjs";
+} from "./assets/lucide-react.mjs";
 
 import {
   queryLocalidades,
