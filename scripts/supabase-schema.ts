@@ -25,7 +25,7 @@ try {
   });
 
   await client.connect();
-  await client.query(await readFile("src/schema.sql", "utf8"));
+  await client.query(await readFile("supabase/schema.sql", "utf8"));
   await client.end();
   console.log("Supabase schema applied successfully.");
 } catch (error) {
