@@ -15,6 +15,7 @@ import {
   ArrowUpDown,
   X,
   Layers,
+  ChevronLeft,
   ChevronRight,
   BarChart2,
   HelpCircle,
@@ -47,6 +48,8 @@ type Frequencia = {
   quociente_locacional: number;
   origem?: string;
 };
+
+const RANKING_PAGE_SIZE = 30;
 
 const REGIOES_POR_UF: Record<string, string> = {
   AC: "Norte",
@@ -91,6 +94,8 @@ const format = (val: unknown, fractionDigits?: number) => {
 
 export default function App() {
   const [selectedUf, setSelectedUf] = React.useState("CE");
+  const [rankingPage, setRankingPage] = React.useState(0);
+  const [totalStateFrequencies, setTotalStateFrequencies] = React.useState(0);
   const [localidades, setLocalidades] = React.useState<Localidade[]>([]);
   const [stateFrequencies, setStateFrequencies] = React.useState<Frequencia[]>(
     [],
@@ -148,17 +153,23 @@ export default function App() {
     setDataError(null);
 
     const loadStateRanking = async () => {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("frequencias_analise")
-        .select("nome, localidade, frequencia, quociente_locacional")
+        .select("nome, localidade, frequencia, quociente_locacional", {
+          count: "exact",
+        })
         .eq("localidade", localidadeCod)
         .order("quociente_locacional", { ascending: false })
-        .limit(30);
+        .range(
+          rankingPage * RANKING_PAGE_SIZE,
+          (rankingPage + 1) * RANKING_PAGE_SIZE - 1,
+        );
 
       if (!isCurrent) return;
       if (error) {
         setDataError(error.message);
       } else {
+        setTotalStateFrequencies(count ?? 0);
         setStateFrequencies(
           (data ?? []).map((item) => ({
             sobrenome: item.nome,
@@ -176,7 +187,7 @@ export default function App() {
     return () => {
       isCurrent = false;
     };
-  }, [localidades, selectedUf]);
+  }, [localidades, rankingPage, selectedUf]);
 
   React.useEffect(() => {
     if (!expandedSurname) {
@@ -250,12 +261,16 @@ export default function App() {
 
     return list.map((item, index) => ({
       ...item,
-      rank: index + 1,
+      rank: rankingPage * RANKING_PAGE_SIZE + index + 1,
       percentLocal: currentStateInfo
         ? ((item.frequencia / currentStateInfo.pop_local) * 100).toFixed(3)
         : "0.000",
     }));
   }, [stateFrequencies, currentStateInfo]);
+
+  const totalRankingPages = Math.ceil(
+    totalStateFrequencies / RANKING_PAGE_SIZE,
+  );
 
   /* Top typical surname stats for dashboard highlight */
   const topTypicalSurname = React.useMemo(() => {
@@ -611,6 +626,7 @@ export default function App() {
                   key={st.uf}
                   onClick={() => {
                     setSelectedUf(st.uf);
+                    setRankingPage(0);
                     setExpandedSurname(null);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
@@ -895,11 +911,42 @@ export default function App() {
           </div>
 
           {/* Table Footer Summary */}
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+          <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div>
-              Mostrando <strong>{stateRanking.length}</strong> sobrenomes
-              analisados para o estado de{" "}
-              <strong>{currentStateInfo.nome}</strong>.
+              Mostrando <strong>{stateRanking.length}</strong> de{" "}
+              <strong>{totalStateFrequencies}</strong> sobrenomes analisados
+              para o estado de <strong>{currentStateInfo.nome}</strong>.
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setExpandedSurname(null);
+                  setRankingPage((page) => page - 1);
+                }}
+                disabled={rankingPage === 0 || isLoading}
+                aria-label="Página anterior"
+                title="Página anterior"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="min-w-20 text-center font-medium text-slate-600">
+                Página {rankingPage + 1} de {totalRankingPages || 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setExpandedSurname(null);
+                  setRankingPage((page) => page + 1);
+                }}
+                disabled={isLoading || rankingPage + 1 >= totalRankingPages}
+                aria-label="Próxima página"
+                title="Próxima página"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
             <div className="flex items-center gap-1 text-slate-400">
               <BookOpen className="w-3.5 h-3.5" />

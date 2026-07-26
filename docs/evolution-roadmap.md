@@ -77,8 +77,10 @@ state than its national baseline would predict.
   serves `dist/` at port 8000.
 - The client loads non-Brazil localities, lets the visitor filter the state list
   by region, and defaults to Ceara (`CE`).
-- For the selected state, it reads the top 30 rows from
-  `frequencias_analise`, ordered by descending location quotient.
+- For the selected state, it reads `frequencias_analise` in pages of 30 rows,
+  ordered by descending location quotient. The UI requests an exact row count,
+  shows the current page and total results, and lets visitors move between
+  pages while preserving global ranks.
 - Expanding a surname loads its state analysis rows and displays its national
   distribution, including the top five location quotients and a complete state
   table.
@@ -91,6 +93,8 @@ state than its national baseline would predict.
 - `npm test` runs three network-backed IBGE integration tests: ranking, a
   surname detail lookup, and state locality data.
 - `npm run typecheck` runs TypeScript without emitting JavaScript.
+- Pagination was smoke-tested in the browser against the live Supabase data:
+  Ceará returned 1,999 surnames across 67 pages, and page 2 began at rank 31.
 
 ## Remaining Limitations
 
