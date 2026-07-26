@@ -32,6 +32,7 @@ const supabase = Supabase.createClient<Database>(
 );
 
 type Localidade = {
+  cod?: number;
   uf: string;
   nome: string;
   pop_local: number;
@@ -40,343 +41,66 @@ type Localidade = {
 
 type Frequencia = {
   sobrenome: string;
+  localidade?: number;
   uf: string;
   frequencia: number;
   quociente_locacional: number;
-  origem: string;
+  origem?: string;
 };
 
-const LOCALIDADES: Localidade[] = [
-  { uf: "AC", nome: "Acre", pop_local: 830026, regiao: "Norte" },
-  { uf: "AL", nome: "Alagoas", pop_local: 3127511, regiao: "Nordeste" },
-  { uf: "AP", nome: "Amapá", pop_local: 733508, regiao: "Norte" },
-  { uf: "AM", nome: "Amazonas", pop_local: 3941175, regiao: "Norte" },
-  { uf: "BA", nome: "Bahia", pop_local: 14136417, regiao: "Nordeste" },
-  { uf: "CE", nome: "Ceará", pop_local: 8791688, regiao: "Nordeste" },
-  {
-    uf: "DF",
-    nome: "Distrito Federal",
-    pop_local: 2817068,
-    regiao: "Centro-Oeste",
-  },
-  { uf: "ES", nome: "Espírito Santo", pop_local: 3833486, regiao: "Sudeste" },
-  { uf: "GO", nome: "Goiás", pop_local: 7055228, regiao: "Centro-Oeste" },
-  { uf: "MA", nome: "Maranhão", pop_local: 6775805, regiao: "Nordeste" },
-  { uf: "MT", nome: "Mato Grosso", pop_local: 3658813, regiao: "Centro-Oeste" },
-  {
-    uf: "MS",
-    nome: "Mato Grosso do Sul",
-    pop_local: 2756700,
-    regiao: "Centro-Oeste",
-  },
-  { uf: "MG", nome: "Minas Gerais", pop_local: 20538718, regiao: "Sudeste" },
-  { uf: "PA", nome: "Pará", pop_local: 8116132, regiao: "Norte" },
-  { uf: "PB", nome: "Paraíba", pop_local: 3974495, regiao: "Nordeste" },
-  { uf: "PR", nome: "Paraná", pop_local: 11443208, regiao: "Sul" },
-  { uf: "PE", nome: "Pernambuco", pop_local: 9058155, regiao: "Nordeste" },
-  { uf: "PI", nome: "Piauí", pop_local: 3269200, regiao: "Nordeste" },
-  { uf: "RJ", nome: "Rio de Janeiro", pop_local: 16054524, regiao: "Sudeste" },
-  {
-    uf: "RN",
-    nome: "Rio Grande do Norte",
-    pop_local: 3302406,
-    regiao: "Nordeste",
-  },
-  { uf: "RS", nome: "Rio Grande do Sul", pop_local: 10880506, regiao: "Sul" },
-  { uf: "RO", nome: "Rondônia", pop_local: 1581016, regiao: "Norte" },
-  { uf: "RR", nome: "Roraima", pop_local: 636303, regiao: "Norte" },
-  { uf: "SC", nome: "Santa Catarina", pop_local: 7609601, regiao: "Sul" },
-  { uf: "SP", nome: "São Paulo", pop_local: 44420459, regiao: "Sudeste" },
-  { uf: "SE", nome: "Sergipe", pop_local: 2209558, regiao: "Nordeste" },
-  { uf: "TO", nome: "Tocantins", pop_local: 1511459, regiao: "Norte" },
-];
-
-const POPULACAO_BRASIL = LOCALIDADES.reduce(
-  (acc, curr) => acc + curr.pop_local,
-  0,
-);
-
-/* Raw surname data profiles with strong state/regional concentrations */
-const SURNAME_PROFILES = [
-  {
-    sobrenome: "Kaxinawá",
-    baseFreq: 4800,
-    mainUf: "AC",
-    mainShare: 0.88,
-    origin: "Indígena (Panos)",
-  },
-  {
-    sobrenome: "Gondim",
-    baseFreq: 32000,
-    mainUf: "CE",
-    mainShare: 0.52,
-    origin: "Português / Nordestino",
-  },
-  {
-    sobrenome: "Schneider",
-    baseFreq: 142000,
-    mainUf: "SC",
-    mainShare: 0.38,
-    origin: "Germânico (Sul)",
-  },
-  {
-    sobrenome: "Takahashi",
-    baseFreq: 45000,
-    mainUf: "SP",
-    mainShare: 0.65,
-    origin: "Japonês (Sudeste)",
-  },
-  {
-    sobrenome: "Linhares",
-    baseFreq: 68000,
-    mainUf: "CE",
-    mainShare: 0.44,
-    origin: "Português / Cearense",
-  },
-  {
-    sobrenome: "Kopp",
-    baseFreq: 22000,
-    mainUf: "RS",
-    mainShare: 0.58,
-    origin: "Germânico (Gaúcho)",
-  },
-  {
-    sobrenome: "Sobral",
-    baseFreq: 38000,
-    mainUf: "SE",
-    mainShare: 0.42,
-    origin: "Ibérico / Sergipano",
-  },
-  {
-    sobrenome: "Holanda",
-    baseFreq: 110000,
-    mainUf: "CE",
-    mainShare: 0.51,
-    origin: "Neerlandês / Cearense",
-  },
-  {
-    sobrenome: "Medeiros",
-    baseFreq: 290000,
-    mainUf: "RN",
-    mainShare: 0.36,
-    origin: "Açoriano / Potiguar",
-  },
-  {
-    sobrenome: "Bressan",
-    baseFreq: 31000,
-    mainUf: "SC",
-    mainShare: 0.49,
-    origin: "Italiano (Catarinense)",
-  },
-  {
-    sobrenome: "Cavalcante",
-    baseFreq: 420000,
-    mainUf: "CE",
-    mainShare: 0.32,
-    origin: "Italiano / Nordestino",
-  },
-  {
-    sobrenome: "Steffen",
-    baseFreq: 19000,
-    mainUf: "RS",
-    mainShare: 0.62,
-    origin: "Germânico",
-  },
-  {
-    sobrenome: "Sato",
-    baseFreq: 62000,
-    mainUf: "SP",
-    mainShare: 0.68,
-    origin: "Japonês",
-  },
-  {
-    sobrenome: "Zimmermann",
-    baseFreq: 28000,
-    mainUf: "SC",
-    mainShare: 0.54,
-    origin: "Germânico",
-  },
-  {
-    sobrenome: "Wanderley",
-    baseFreq: 49000,
-    mainUf: "PE",
-    mainShare: 0.45,
-    origin: "Holandês / Pernambucano",
-  },
-  {
-    sobrenome: "Diniz",
-    baseFreq: 185000,
-    mainUf: "MA",
-    mainShare: 0.31,
-    origin: "Português",
-  },
-  {
-    sobrenome: "Aragão",
-    baseFreq: 92000,
-    mainUf: "CE",
-    mainShare: 0.39,
-    origin: "Ibérico",
-  },
-  {
-    sobrenome: "Rossi",
-    baseFreq: 165000,
-    mainUf: "SP",
-    mainShare: 0.48,
-    origin: "Italiano",
-  },
-  {
-    sobrenome: "Fischer",
-    baseFreq: 54000,
-    mainUf: "SC",
-    mainShare: 0.46,
-    origin: "Germânico",
-  },
-  {
-    sobrenome: "Guerra",
-    baseFreq: 115000,
-    mainUf: "PE",
-    mainShare: 0.35,
-    origin: "Ibérico",
-  },
-  {
-    sobrenome: "Lins",
-    baseFreq: 130000,
-    mainUf: "PE",
-    mainShare: 0.41,
-    origin: "Alemão-Açoriano",
-  },
-  {
-    sobrenome: "Sampaio",
-    baseFreq: 210000,
-    mainUf: "BA",
-    mainShare: 0.38,
-    origin: "Português",
-  },
-  {
-    sobrenome: "Azevedo",
-    baseFreq: 380000,
-    mainUf: "RJ",
-    mainShare: 0.28,
-    origin: "Português",
-  },
-  {
-    sobrenome: "Brito",
-    baseFreq: 520000,
-    mainUf: "BA",
-    mainShare: 0.29,
-    origin: "Português",
-  },
-  {
-    sobrenome: "Aguiar",
-    baseFreq: 240000,
-    mainUf: "CE",
-    mainShare: 0.33,
-    origin: "Português",
-  },
-  {
-    sobrenome: "Silva",
-    baseFreq: 10200000,
-    mainUf: "SP",
-    mainShare: 0.21,
-    origin: "Nacional (Muito comum)",
-  },
-  {
-    sobrenome: "Santos",
-    baseFreq: 7800000,
-    mainUf: "BA",
-    mainShare: 0.23,
-    origin: "Nacional (Muito comum)",
-  },
-  {
-    sobrenome: "Oliveira",
-    baseFreq: 5400000,
-    mainUf: "MG",
-    mainShare: 0.2,
-    origin: "Nacional (Muito comum)",
-  },
-  {
-    sobrenome: "Souza",
-    baseFreq: 4900000,
-    mainUf: "BA",
-    mainShare: 0.19,
-    origin: "Nacional (Muito comum)",
-  },
-  {
-    sobrenome: "Lima",
-    baseFreq: 3800000,
-    mainUf: "CE",
-    mainShare: 0.22,
-    origin: "Nacional",
-  },
-];
-
-/**
- * Generates full realistic table of Frequencia across all UFs
- * Calculates Quociente Locacional (QL):
- * QL = (Freq_UF / Pop_UF) / (Freq_BR / Pop_BR)
- */
-const generateMockDatabase = () => {
-  const frequencias: Frequencia[] = [];
-
-  SURNAME_PROFILES.forEach((profile) => {
-    const totalFreqBr = profile.baseFreq;
-    const mainState =
-      LOCALIDADES.find((l) => l.uf === profile.mainUf) || LOCALIDADES[0];
-
-    // Calculate main state frequency based on specified share
-    const mainFreq = Math.round(totalFreqBr * profile.mainShare);
-    let remainingFreq = totalFreqBr - mainFreq;
-
-    // Distribute remaining frequency across other UFs proportional to population with random variance
-    const otherStates = LOCALIDADES.filter((l) => l.uf !== profile.mainUf);
-    const otherPopTotal = otherStates.reduce(
-      (acc, curr) => acc + curr.pop_local,
-      0,
-    );
-
-    const stateFreqs: Record<string, number> = {};
-    stateFreqs[profile.mainUf] = mainFreq;
-
-    otherStates.forEach((st, idx) => {
-      if (idx === otherStates.length - 1) {
-        stateFreqs[st.uf] = Math.max(10, remainingFreq);
-      } else {
-        const prop = st.pop_local / otherPopTotal;
-        const noise = 0.5 + Math.sin(profile.sobrenome.length + idx) * 0.4;
-        const calculated = Math.round(remainingFreq * prop * noise);
-        const allocated = Math.min(remainingFreq, Math.max(5, calculated));
-        stateFreqs[st.uf] = allocated;
-        remainingFreq -= allocated;
-      }
-    });
-
-    // Calculate actual total sum generated
-    const actualTotalBr = Object.values(stateFreqs).reduce((a, b) => a + b, 0);
-    const nationalRate = actualTotalBr / POPULACAO_BRASIL;
-
-    // Build Frequencia objects for each UF
-    LOCALIDADES.forEach((loc) => {
-      const count = stateFreqs[loc.uf] || 10;
-      const localRate = count / loc.pop_local;
-      const ql = Number((localRate / nationalRate).toFixed(2));
-
-      frequencias.push({
-        sobrenome: profile.sobrenome,
-        uf: loc.uf,
-        frequencia: count,
-        quociente_locacional: ql,
-        origem: profile.origin,
-      });
-    });
-  });
-
-  return frequencias;
+const REGIOES_POR_UF: Record<string, string> = {
+  AC: "Norte",
+  AL: "Nordeste",
+  AP: "Norte",
+  AM: "Norte",
+  BA: "Nordeste",
+  CE: "Nordeste",
+  DF: "Centro-Oeste",
+  ES: "Sudeste",
+  GO: "Centro-Oeste",
+  MA: "Nordeste",
+  MT: "Centro-Oeste",
+  MS: "Centro-Oeste",
+  MG: "Sudeste",
+  PA: "Norte",
+  PB: "Nordeste",
+  PR: "Sul",
+  PE: "Nordeste",
+  PI: "Nordeste",
+  RJ: "Sudeste",
+  RN: "Nordeste",
+  RS: "Sul",
+  RO: "Norte",
+  RR: "Norte",
+  SC: "Sul",
+  SP: "Sudeste",
+  SE: "Nordeste",
+  TO: "Norte",
 };
 
-const FREQUENCIAS_DB = generateMockDatabase();
+const format = (val: unknown, fractionDigits?: number) => {
+  if (typeof val === "number") {
+    if (fractionDigits === undefined) return val.toLocaleString("pt-BR");
+    return val.toLocaleString("pt-BR", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+  }
+  return String(val);
+};
 
 export default function App() {
   const [selectedUf, setSelectedUf] = React.useState("CE");
+  const [localidades, setLocalidades] = React.useState<Localidade[]>([]);
+  const [stateFrequencies, setStateFrequencies] = React.useState<Frequencia[]>(
+    [],
+  );
+  const [nationwideFrequencies, setNationwideFrequencies] = React.useState<
+    Frequencia[]
+  >([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoadingNationwide, setIsLoadingNationwide] = React.useState(false);
+  const [dataError, setDataError] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [expandedSurname, setExpandedSurname] = React.useState<string | null>(
     null,
@@ -386,20 +110,146 @@ export default function App() {
   const [selectedRegion, setSelectedRegion] = React.useState("Todas");
   const [showInfoModal, setShowInfoModal] = React.useState(false);
 
+  React.useEffect(() => {
+    let isCurrent = true;
+
+    const loadLocalidades = async () => {
+      const { data, error } = await supabase
+        .from("localidades")
+        .select("cod, nome, uf, pop_local")
+        .neq("uf", "BR")
+        .order("nome");
+
+      if (!isCurrent) return;
+      if (error) {
+        setDataError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      setLocalidades(
+        (data ?? []).map((localidade) => ({
+          ...localidade,
+          regiao: REGIOES_POR_UF[localidade.uf] ?? "Não informada",
+        })),
+      );
+    };
+
+    void loadLocalidades();
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const localidade = localidades.find((item) => item.uf === selectedUf);
+    if (localidade?.cod === undefined) return;
+    const localidadeCod = localidade.cod;
+
+    let isCurrent = true;
+    setIsLoading(true);
+    setDataError(null);
+
+    const loadStateRanking = async () => {
+      const { data, error } = await supabase
+        .from("frequencias_analise")
+        .select("nome, localidade, frequencia, quociente_locacional")
+        .eq("localidade", localidadeCod)
+        .order("quociente_locacional", { ascending: false })
+        .limit(30);
+
+      if (!isCurrent) return;
+      if (error) {
+        setDataError(error.message);
+      } else {
+        setStateFrequencies(
+          (data ?? []).map((item) => ({
+            sobrenome: item.nome,
+            localidade: item.localidade,
+            uf: localidade.uf,
+            frequencia: item.frequencia,
+            quociente_locacional: item.quociente_locacional,
+          })),
+        );
+      }
+      setIsLoading(false);
+    };
+
+    void loadStateRanking();
+    return () => {
+      isCurrent = false;
+    };
+  }, [localidades, selectedUf]);
+
+  React.useEffect(() => {
+    if (!expandedSurname) {
+      setNationwideFrequencies([]);
+      return;
+    }
+
+    let isCurrent = true;
+    setIsLoadingNationwide(true);
+
+    const loadNationwideDetails = async () => {
+      const { data, error } = await supabase
+        .from("frequencias_analise")
+        .select("nome, localidade, frequencia, quociente_locacional")
+        .eq("nome", expandedSurname)
+        .order("quociente_locacional", { ascending: false });
+
+      if (!isCurrent) return;
+      if (error) {
+        setDataError(error.message);
+      } else {
+        const localidadesPorCodigo = new Map(
+          localidades.flatMap((item) =>
+            item.cod ? [[item.cod, item] as const] : [],
+          ),
+        );
+        setNationwideFrequencies(
+          (data ?? []).flatMap((item) => {
+            const localidade = localidadesPorCodigo.get(item.localidade);
+            return localidade
+              ? [
+                  {
+                    sobrenome: item.nome,
+                    localidade: item.localidade,
+                    uf: localidade.uf,
+                    frequencia: item.frequencia,
+                    quociente_locacional: item.quociente_locacional,
+                  },
+                ]
+              : [];
+          }),
+        );
+      }
+      setIsLoadingNationwide(false);
+    };
+
+    void loadNationwideDetails();
+    return () => {
+      isCurrent = false;
+    };
+  }, [expandedSurname, localidades]);
+
+  const populacaoBrasil = React.useMemo(() => {
+    return localidades.reduce((acc, curr) => acc + curr.pop_local, 0);
+  }, [localidades]);
+
   /* Current State metadata */
   const currentStateInfo = React.useMemo(() => {
-    return LOCALIDADES.find((l) => l.uf === selectedUf) || LOCALIDADES[0];
-  }, [selectedUf]);
+    return localidades.find((l) => l.uf === selectedUf) || localidades[0];
+  }, [localidades, selectedUf]);
 
   /* Filtered list of UFs for header quick selection */
   const filteredStates = React.useMemo(() => {
-    if (selectedRegion === "Todas") return LOCALIDADES;
-    return LOCALIDADES.filter((l) => l.regiao === selectedRegion);
-  }, [selectedRegion]);
+    if (selectedRegion === "Todas") return localidades;
+    return localidades.filter((l) => l.regiao === selectedRegion);
+  }, [localidades, selectedRegion]);
 
   /* Ranking table calculation for selected UF */
   const stateRanking = React.useMemo(() => {
-    let list = FREQUENCIAS_DB.filter((f) => f.uf === selectedUf);
+    let list = stateFrequencies;
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase().trim();
@@ -420,12 +270,11 @@ export default function App() {
     return list.map((item, index) => ({
       ...item,
       rank: index + 1,
-      percentLocal: (
-        (item.frequencia / currentStateInfo.pop_local) *
-        100
-      ).toFixed(3),
+      percentLocal: currentStateInfo
+        ? ((item.frequencia / currentStateInfo.pop_local) * 100).toFixed(3)
+        : "0.000",
     }));
-  }, [selectedUf, searchTerm, minQlFilter, sortBy, currentStateInfo]);
+  }, [stateFrequencies, searchTerm, minQlFilter, sortBy, currentStateInfo]);
 
   /* Top typical surname stats for dashboard highlight */
   const topTypicalSurname = React.useMemo(() => {
@@ -435,11 +284,8 @@ export default function App() {
 
   /* Total statistics for current state */
   const totalAnalyzedInUf = React.useMemo(() => {
-    return FREQUENCIAS_DB.filter((f) => f.uf === selectedUf).reduce(
-      (acc, curr) => acc + curr.frequencia,
-      0,
-    );
-  }, [selectedUf]);
+    return stateFrequencies.reduce((acc, curr) => acc + curr.frequencia, 0);
+  }, [stateFrequencies]);
 
   /* Helper to toggle row expansion */
   const toggleExpand = (sobrenome: string) => {
@@ -451,9 +297,9 @@ export default function App() {
   };
 
   const renderNationwideDetails = (sobrenome: string) => {
-    const allStateData = FREQUENCIAS_DB.filter((f) => f.sobrenome === sobrenome)
+    const allStateData = nationwideFrequencies
       .map((item) => {
-        const stateLoc = LOCALIDADES.find((l) => l.uf === item.uf);
+        const stateLoc = localidades.find((l) => l.uf === item.uf);
         return {
           ...item,
           nomeEstado: stateLoc ? stateLoc.nome : item.uf,
@@ -465,6 +311,22 @@ export default function App() {
         };
       })
       .sort((a, b) => b.quociente_locacional - a.quociente_locacional);
+
+    if (isLoadingNationwide) {
+      return (
+        <div className="p-6 text-center text-sm text-slate-500">
+          Carregando distribuição nacional...
+        </div>
+      );
+    }
+
+    if (allStateData.length === 0) {
+      return (
+        <div className="p-6 text-center text-sm text-slate-500">
+          Não há dados nacionais disponíveis para este sobrenome.
+        </div>
+      );
+    }
 
     const totalBrasilCount = allStateData.reduce((a, b) => a + b.frequencia, 0);
     const top5States = allStateData.slice(0, 5);
@@ -486,7 +348,7 @@ export default function App() {
             <p className="text-xs md:text-sm text-slate-600 mt-1">
               Presente em todos os 27 estados. Total estimado no Brasil:{" "}
               <strong className="text-slate-900">
-                {totalBrasilCount.toLocaleString("pt-BR")}
+                {format(totalBrasilCount)}
               </strong>{" "}
               pessoas.
             </p>
@@ -498,7 +360,8 @@ export default function App() {
                 Estado com Maior QL
               </span>
               <strong className="text-blue-900 text-base">
-                {top5States[0]?.uf} ({top5States[0]?.quociente_locacional}x)
+                {top5States[0]?.uf} (
+                {format(top5States[0]?.quociente_locacional)}x)
               </strong>
             </div>
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-center">
@@ -506,7 +369,7 @@ export default function App() {
                 Média Nacional
               </span>
               <strong className="text-emerald-900 text-base">
-                {((totalBrasilCount / POPULACAO_BRASIL) * 100).toFixed(3)}%
+                {format((totalBrasilCount / populacaoBrasil) * 100, 3)}%
               </strong>
             </div>
           </div>
@@ -543,7 +406,7 @@ export default function App() {
                     <span
                       className={`text-xs font-semibold ${isCurrent ? "text-amber-300" : "text-blue-800"}`}
                     >
-                      {st.quociente_locacional}x
+                      {format(st.quociente_locacional)}x
                     </span>
                   </div>
 
@@ -554,8 +417,8 @@ export default function App() {
                     <div
                       className={`text-[11px] ${isCurrent ? "text-blue-200" : "text-slate-500"}`}
                     >
-                      {st.frequencia.toLocaleString("pt-BR")} pessoas (
-                      {st.percentState}%)
+                      {format(st.frequencia)} pessoas (
+                      {format(+st.percentState)}%)
                     </div>
                   </div>
 
@@ -637,13 +500,13 @@ export default function App() {
                         )}
                       </td>
                       <td className="px-3 py-2 text-right font-mono">
-                        {st.frequencia.toLocaleString("pt-BR")}
+                        {format(st.frequencia)}
                       </td>
                       <td className="px-3 py-2 text-right font-mono">
-                        {st.percentState}%
+                        {format(+st.percentState)}%
                       </td>
                       <td className="px-3 py-2 text-right font-mono font-bold text-slate-900">
-                        {st.quociente_locacional}x
+                        {format(st.quociente_locacional)}x
                       </td>
                       <td className="px-3 py-2">
                         <span
@@ -662,6 +525,22 @@ export default function App() {
       </div>
     );
   };
+
+  if (isLoading && !currentStateInfo) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-slate-600">
+        Carregando dados do Censo...
+      </div>
+    );
+  }
+
+  if (dataError && !currentStateInfo) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6 text-center text-sm text-red-700">
+        Não foi possível carregar os dados: {dataError}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 font-sans antialiased pb-12">
@@ -796,7 +675,7 @@ export default function App() {
             <div className="mt-4 pt-3 border-t border-blue-800/60 flex items-center justify-between text-xs text-blue-200">
               <span>População Censo 2022:</span>
               <strong className="text-white text-sm font-mono">
-                {currentStateInfo.pop_local.toLocaleString("pt-BR")} hab.
+                {format(currentStateInfo.pop_local)} hab.
               </strong>
             </div>
           </div>
@@ -814,7 +693,7 @@ export default function App() {
                 </h4>
                 {topTypicalSurname && (
                   <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    {topTypicalSurname.quociente_locacional}x
+                    {format(topTypicalSurname.quociente_locacional)}x
                   </span>
                 )}
               </div>
@@ -836,7 +715,7 @@ export default function App() {
               <div className="mt-1">
                 <span className="text-2xl font-black text-blue-900">
                   {topTypicalSurname
-                    ? `${topTypicalSurname.quociente_locacional}x`
+                    ? `${format(topTypicalSurname.quociente_locacional)}x`
                     : "0x"}
                 </span>
                 <span className="text-xs text-slate-500 ml-2">
@@ -859,7 +738,7 @@ export default function App() {
               </span>
               <div className="mt-1">
                 <span className="text-2xl font-black text-slate-900 font-mono">
-                  {totalAnalyzedInUf.toLocaleString("pt-BR")}
+                  {format(totalAnalyzedInUf)}
                 </span>
                 <span className="text-xs text-slate-500 ml-1">pessoas</span>
               </div>
@@ -966,7 +845,7 @@ export default function App() {
                 <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-600 tracking-wider">
                   <th className="py-3 px-4 w-12 text-center">#</th>
                   <th className="py-3 px-4">Sobrenome</th>
-                  <th className="py-3 px-4">Origem Predominante</th>
+                  <th className="py-3 px-4">Fonte</th>
                   <th className="py-3 px-4 text-right">
                     Pessoas em {currentStateInfo.uf}
                   </th>
@@ -1051,20 +930,20 @@ export default function App() {
                             {row.sobrenome}
                           </td>
                           <td className="py-3.5 px-4 text-xs text-slate-500">
-                            {row.origem || "Ibérico"}
+                            Dados do Censo 2022
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono text-slate-800">
-                            {row.frequencia.toLocaleString("pt-BR")}
+                            {format(row.frequencia)}
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-600">
-                            {row.percentLocal}%
+                            {format(+row.percentLocal)}%
                           </td>
                           <td className="py-3.5 px-4 text-right">
                             <span
                               className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs border ${qlBadgeClass}`}
                             >
                               {qlIcon}
-                              {row.quociente_locacional}x
+                              {format(row.quociente_locacional)}x
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-center">
