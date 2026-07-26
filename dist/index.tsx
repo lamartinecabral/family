@@ -1,4 +1,4 @@
-import React from "./react.mjs";
+import React, { createRoot } from "./react.mjs";
 
 import {
   Search,
@@ -20,13 +20,13 @@ import {
   HelpCircle,
 } from "./lucide-react.mjs";
 
-import Supabase from "./supabase.mjs";
+import { createClient } from "./supabase.mjs";
 import type { Database } from "../scripts/supabase.types.ts";
 
 const projectId = "";
 const supabaseKey = "";
 
-const supabase = Supabase.createClient<Database>(
+const supabase = createClient<Database>(
   `https://${projectId}.supabase.co`,
   supabaseKey,
 );
@@ -101,12 +101,9 @@ export default function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isLoadingNationwide, setIsLoadingNationwide] = React.useState(false);
   const [dataError, setDataError] = React.useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = React.useState("");
   const [expandedSurname, setExpandedSurname] = React.useState<string | null>(
     null,
   );
-  const [minQlFilter, setMinQlFilter] = React.useState(1.0);
-  const [sortBy, setSortBy] = React.useState("ql"); // 'ql' or 'freq'
   const [selectedRegion, setSelectedRegion] = React.useState("Todas");
   const [showInfoModal, setShowInfoModal] = React.useState(false);
 
@@ -251,22 +248,6 @@ export default function App() {
   const stateRanking = React.useMemo(() => {
     let list = stateFrequencies;
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase().trim();
-      list = list.filter((item) => item.sobrenome.toLowerCase().includes(term));
-    }
-
-    if (minQlFilter > 1.0) {
-      list = list.filter((item) => item.quociente_locacional >= minQlFilter);
-    }
-
-    list.sort((a, b) => {
-      if (sortBy === "ql") {
-        return b.quociente_locacional - a.quociente_locacional;
-      }
-      return b.frequencia - a.frequencia;
-    });
-
     return list.map((item, index) => ({
       ...item,
       rank: index + 1,
@@ -274,7 +255,7 @@ export default function App() {
         ? ((item.frequencia / currentStateInfo.pop_local) * 100).toFixed(3)
         : "0.000",
     }));
-  }, [stateFrequencies, searchTerm, minQlFilter, sortBy, currentStateInfo]);
+  }, [stateFrequencies, currentStateInfo]);
 
   /* Top typical surname stats for dashboard highlight */
   const topTypicalSurname = React.useMemo(() => {
@@ -768,76 +749,6 @@ export default function App() {
                   linha para abrir o mapa nacional da família.
                 </p>
               </div>
-
-              {/* Search Bar */}
-              <div className="relative min-w-[260px]">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Buscar sobrenome..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Sub-filters & Sort options */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200/80 text-xs">
-              <div className="flex items-center gap-4">
-                {/* Min QL Filter */}
-                <div className="flex items-center gap-2">
-                  <Filter className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="font-semibold text-slate-700">
-                    Filtrar por QL mínimo:
-                  </span>
-                  <select
-                    value={minQlFilter}
-                    onChange={(e) => setMinQlFilter(Number(e.target.value))}
-                    className="bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-800 font-medium"
-                  >
-                    <option value={1.0}>Todos (QL &ge; 1.0)</option>
-                    <option value={1.5}>Relevantes (QL &ge; 1.5x)</option>
-                    <option value={2.0}>Muito Típicos (QL &ge; 2.0x)</option>
-                    <option value={3.0}>Hiper Típicos (QL &ge; 3.0x)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Sort By Toggle */}
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-700">
-                  Ordenar por:
-                </span>
-                <button
-                  onClick={() => setSortBy("ql")}
-                  className={`px-3 py-1 rounded transition-all font-medium ${
-                    sortBy === "ql"
-                      ? "bg-blue-900 text-white shadow-sm"
-                      : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  Quociente Locacional (QL)
-                </button>
-                <button
-                  onClick={() => setSortBy("freq")}
-                  className={`px-3 py-1 rounded transition-all font-medium ${
-                    sortBy === "freq"
-                      ? "bg-blue-900 text-white shadow-sm"
-                      : "bg-white border border-slate-300 text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  Frequência Absoluta
-                </button>
-              </div>
             </div>
           </div>
 
@@ -867,15 +778,6 @@ export default function App() {
                       <p className="font-semibold">
                         Nenhum sobrenome encontrado com os filtros selecionados.
                       </p>
-                      <button
-                        onClick={() => {
-                          setSearchTerm("");
-                          setMinQlFilter(1.0);
-                        }}
-                        className="mt-2 text-xs text-blue-800 underline hover:text-blue-900 font-medium"
-                      >
-                        Limpar todos os filtros
-                      </button>
                     </td>
                   </tr>
                 ) : (
@@ -1106,4 +1008,4 @@ export default function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<App />);
