@@ -20,25 +20,33 @@ import {
   HelpCircle,
 } from "./lucide-react.mjs";
 
-const { useState, useMemo } = React;
+import Supabase from "./supabase.mjs";
+import type { Database } from "../scripts/supabase.types.ts";
 
-/**
- * @typedef {Object} Localidade
- * @property {string} uf - Código de 2 letras do estado
- * @property {string} nome - Nome completo do estado
- * @property {number} pop_local - População total do estado (Censo 2022)
- * @property {string} regiao - Região geográfica (Norte, Nordeste, etc.)
- */
+const projectId = "";
+const supabaseKey = "";
 
-/**
- * @typedef {Object} Frequencia
- * @property {string} sobrenome - O nome de família
- * @property {string} uf - Código do estado
- * @property {number} frequencia - Contagem de pessoas com este sobrenome no estado
- * @property {number} quociente_locacional - Razão da concentração local vs nacional
- */
+const supabase = Supabase.createClient<Database>(
+  `https://${projectId}.supabase.co`,
+  supabaseKey,
+);
 
-const LOCALIDADES = [
+type Localidade = {
+  uf: string;
+  nome: string;
+  pop_local: number;
+  regiao: string;
+};
+
+type Frequencia = {
+  sobrenome: string;
+  uf: string;
+  frequencia: number;
+  quociente_locacional: number;
+  origem: string;
+};
+
+const LOCALIDADES: Localidade[] = [
   { uf: "AC", nome: "Acre", pop_local: 830026, regiao: "Norte" },
   { uf: "AL", nome: "Alagoas", pop_local: 3127511, regiao: "Nordeste" },
   { uf: "AP", nome: "Amapá", pop_local: 733508, regiao: "Norte" },
@@ -308,13 +316,7 @@ const SURNAME_PROFILES = [
  * QL = (Freq_UF / Pop_UF) / (Freq_BR / Pop_BR)
  */
 const generateMockDatabase = () => {
-  const frequencias: {
-    sobrenome: string;
-    uf: string;
-    frequencia: number;
-    quociente_locacional: number;
-    origem: string;
-  }[] = [];
+  const frequencias: Frequencia[] = [];
 
   SURNAME_PROFILES.forEach((profile) => {
     const totalFreqBr = profile.baseFreq;
@@ -374,27 +376,29 @@ const generateMockDatabase = () => {
 const FREQUENCIAS_DB = generateMockDatabase();
 
 export default function App() {
-  const [selectedUf, setSelectedUf] = useState("CE");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [expandedSurname, setExpandedSurname] = useState<string | null>(null);
-  const [minQlFilter, setMinQlFilter] = useState(1.0);
-  const [sortBy, setSortBy] = useState("ql"); // 'ql' or 'freq'
-  const [selectedRegion, setSelectedRegion] = useState("Todas");
-  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [selectedUf, setSelectedUf] = React.useState("CE");
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [expandedSurname, setExpandedSurname] = React.useState<string | null>(
+    null,
+  );
+  const [minQlFilter, setMinQlFilter] = React.useState(1.0);
+  const [sortBy, setSortBy] = React.useState("ql"); // 'ql' or 'freq'
+  const [selectedRegion, setSelectedRegion] = React.useState("Todas");
+  const [showInfoModal, setShowInfoModal] = React.useState(false);
 
   /* Current State metadata */
-  const currentStateInfo = useMemo(() => {
+  const currentStateInfo = React.useMemo(() => {
     return LOCALIDADES.find((l) => l.uf === selectedUf) || LOCALIDADES[0];
   }, [selectedUf]);
 
   /* Filtered list of UFs for header quick selection */
-  const filteredStates = useMemo(() => {
+  const filteredStates = React.useMemo(() => {
     if (selectedRegion === "Todas") return LOCALIDADES;
     return LOCALIDADES.filter((l) => l.regiao === selectedRegion);
   }, [selectedRegion]);
 
   /* Ranking table calculation for selected UF */
-  const stateRanking = useMemo(() => {
+  const stateRanking = React.useMemo(() => {
     let list = FREQUENCIAS_DB.filter((f) => f.uf === selectedUf);
 
     if (searchTerm) {
@@ -424,13 +428,13 @@ export default function App() {
   }, [selectedUf, searchTerm, minQlFilter, sortBy, currentStateInfo]);
 
   /* Top typical surname stats for dashboard highlight */
-  const topTypicalSurname = useMemo(() => {
+  const topTypicalSurname = React.useMemo(() => {
     if (stateRanking.length === 0) return null;
     return stateRanking[0];
   }, [stateRanking]);
 
   /* Total statistics for current state */
-  const totalAnalyzedInUf = useMemo(() => {
+  const totalAnalyzedInUf = React.useMemo(() => {
     return FREQUENCIAS_DB.filter((f) => f.uf === selectedUf).reduce(
       (acc, curr) => acc + curr.frequencia,
       0,
@@ -1121,7 +1125,6 @@ export default function App() {
         </section>
       </main>
 
-      {}
       {showInfoModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 animate-fadeIn relative">
