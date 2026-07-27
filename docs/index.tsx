@@ -21,6 +21,8 @@ import {
   ChevronRight,
   BarChart2,
   HelpCircle,
+  GitBranch,
+  ExternalLink,
 } from "./assets/lucide-react.mjs";
 
 import {
@@ -90,9 +92,25 @@ const format = (val: unknown, fractionDigits?: number) => {
   return String(val);
 };
 
+const ibgeSurnameUrl = (surname: string) =>
+  `https://censo2022.ibge.gov.br/nomes/nome/${encodeURIComponent(
+    surname.toLocaleLowerCase("pt-BR"),
+  )}?tipo=sobrenome&localidade=0`;
+
+const storage = {
+  uf: {
+    load: () => localStorage.getItem("selectedUf") || "CE",
+    save: (uf: string) => localStorage.setItem("selectedUf", uf),
+  },
+  page: {
+    load: () => Number(localStorage.getItem("selectedPage") || "0"),
+    save: (page: number) => localStorage.setItem("selectedPage", String(page)),
+  },
+};
+
 export default function App() {
-  const [selectedUf, setSelectedUf] = useState("CE");
-  const [rankingPage, setRankingPage] = useState(0);
+  const [selectedUf, setSelectedUf] = useState(() => storage.uf.load());
+  const [rankingPage, setRankingPage] = useState(() => storage.page.load());
   const [totalStateFrequencies, setTotalStateFrequencies] = useState(0);
   const [localidades, setLocalidades] = useState<Localidade[]>([]);
   const [stateFrequencies, setStateFrequencies] = useState<Frequencia[]>([]);
@@ -113,6 +131,9 @@ export default function App() {
   const [isSearchingSurname, setIsSearchingSurname] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState("Todas");
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [topTypicalSurname, setTopTypicalSurname] = useState<
+    (Frequencia & { percentLocal: string }) | null
+  >(null);
 
   useEffect(() => {
     let isCurrent = true;
@@ -261,10 +282,24 @@ export default function App() {
   );
 
   /* Top typical surname stats for dashboard highlight */
-  const topTypicalSurname = useMemo(() => {
-    if (stateRanking.length === 0) return null;
-    return stateRanking[0];
-  }, [stateRanking]);
+  useEffect(() => {
+    if (!currentStateInfo?.cod) return;
+    queryStateRanking(currentStateInfo.cod, 0, 1).then(({ data, error }) => {
+      if (error) {
+        setTopTypicalSurname(null);
+        return;
+      }
+      setTopTypicalSurname({
+        frequencia: data[0].frequencia,
+        uf: currentStateInfo.uf,
+        sobrenome: data[0].nome,
+        quociente_locacional: data[0].quociente_locacional,
+        percentLocal: currentStateInfo
+          ? ((data[0].frequencia / currentStateInfo.pop_local) * 100).toFixed(3)
+          : "0.000",
+      });
+    });
+  }, [currentStateInfo]);
 
   /* Helper to toggle row expansion */
   const toggleExpand = (sobrenome: string) => {
@@ -548,7 +583,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans antialiased pb-12">
+    <div className="min-h-screen bg-slate-100 text-slate-800 font-sans antialiased">
       {/* Official IBGE-Style Header */}
       <header className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white border-b-4 border-amber-400 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
@@ -640,7 +675,9 @@ export default function App() {
                   key={st.uf}
                   onClick={() => {
                     setSelectedUf(st.uf);
+                    storage.uf.save(st.uf);
                     setRankingPage(0);
+                    storage.page.save(0);
                     setExpandedSurname(null);
                     setDetailSource(null);
                   }}
@@ -921,7 +958,17 @@ export default function App() {
                             )}
                           </td>
                           <td className="py-3.5 px-4 font-bold text-slate-900 text-base">
-                            {row.sobrenome}
+                            <a
+                              href={ibgeSurnameUrl(row.sobrenome)}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(event) => event.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-blue-900 underline decoration-blue-300 underline-offset-2 hover:text-blue-700 hover:decoration-blue-700"
+                              title={`Ver ${row.sobrenome} no IBGE`}
+                            >
+                              {row.sobrenome}
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
                           </td>
                           <td className="py-3.5 px-4 text-xs text-slate-500">
                             Dados do Censo 2022
@@ -997,6 +1044,7 @@ export default function App() {
                   setExpandedSurname(null);
                   setDetailSource(null);
                   setRankingPage((page) => page - 1);
+                  storage.page.save(rankingPage - 1);
                 }}
                 disabled={rankingPage === 0 || isLoading}
                 aria-label="Página anterior"
@@ -1014,6 +1062,7 @@ export default function App() {
                   setExpandedSurname(null);
                   setDetailSource(null);
                   setRankingPage((page) => page + 1);
+                  storage.page.save(rankingPage + 1);
                 }}
                 disabled={isLoading || rankingPage + 1 >= totalRankingPages}
                 aria-label="Próxima página"
@@ -1117,14 +1166,25 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer IBGE inspired */}
-      <footer className="mt-12 text-center text-xs text-slate-500 border-t border-slate-200 pt-6">
-        <p className="font-semibold text-slate-700">
-          As famílias típicas de cada estado — Censo Demográfico 2022
-        </p>
-        <p className="mt-1">
-          Inspirado na identidade visual do Portal de Nomes do IBGE
-        </p>
+      <footer className="mt-12 border-t-4 border-amber-400 bg-slate-900 text-slate-300">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 text-xs sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-white">
+              As famílias típicas de cada estado
+            </p>
+            <p className="mt-1 text-slate-400">Censo Demográfico 2022</p>
+          </div>
+          <a
+            href="https://github.com/lamartinecabral/nomes-da-terra"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 font-medium text-slate-200 transition-colors hover:border-amber-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-900"
+          >
+            <GitBranch className="h-4 w-4" />
+            Ver projeto no GitHub
+            <ExternalLink className="h-3.5 w-3.5 text-amber-400" />
+          </a>
+        </div>
       </footer>
     </div>
   );
