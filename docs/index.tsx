@@ -369,6 +369,9 @@ export default function App() {
     }
 
     const totalBrasilCount = allStateData.reduce((a, b) => a + b.frequencia, 0);
+    const statePresenceCount = allStateData.filter(
+      (d) => d.frequencia > 0,
+    ).length;
     const top5States = allStateData.slice(0, 5);
     const maxQl = Math.max(...allStateData.map((d) => d.quociente_locacional));
 
@@ -386,7 +389,10 @@ export default function App() {
               </span>
             </div>
             <p className="text-xs md:text-sm text-slate-600 mt-1">
-              Presente em todos os 27 estados. Total estimado no Brasil:{" "}
+              Presente em{" "}
+              {statePresenceCount === 27 ? "todos os 27" : statePresenceCount}{" "}
+              {statePresenceCount === 1 ? "estado" : "estados"}. Total estimado
+              no Brasil:{" "}
               <strong className="text-slate-900">
                 {format(totalBrasilCount)}
               </strong>{" "}
