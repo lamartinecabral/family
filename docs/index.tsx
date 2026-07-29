@@ -26,7 +26,7 @@ import {
   queryNationWideDetails,
   queryStateRanking,
   querySurname,
-} from "./query.mjs";
+} from "./query-csv.mjs";
 
 type Localidade = {
   cod?: number;
