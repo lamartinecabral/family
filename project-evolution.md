@@ -115,11 +115,11 @@ local web root. `npm start` serves it at `http://localhost:8000` with no build
 step.
 
 `docs/index.html` is the browser entry point. It loads Babel Standalone to
-transpile TypeScript/React in the browser, Tailwind CSS for styling, and the
-Supabase browser library. The entry script uses module mode with the React and
-TypeScript Babel presets. Browser-compatible dependency shims live in
-`docs/assets/`, so application code imports local modules rather than npm
-package names.
+transpile TypeScript/React in the browser, Tailwind CSS for styling, the
+Supabase browser library, and a production-only Firebase Analytics module. The
+entry script uses module mode with the React and TypeScript Babel presets.
+Browser-compatible dependency shims for React, React DOM, Lucide, and Supabase
+live in `docs/assets/` and are exposed through an import map.
 
 `docs/query.mjs` owns the browser-side Supabase client and four data queries:
 list states and populations, retrieve a paginated state ranking ordered by QL,
@@ -127,11 +127,18 @@ retrieve a selected surname's countrywide distribution, and find a surname by
 name.
 
 `docs/index.tsx` implements the interactive experience. Users can filter state
-choices by region, select a state, inspect the highest-QL surnames, paginate a
-30-row ranking, and search for a surname. Expanding a row or completing a
-search shows the surname's distribution across all 27 federative units, ordered
-by QL, with local frequency and population percentage. The interface also
-explains QL and handles loading, empty-data, and query-error states.
+choices by region, select a state, inspect a summary of its population and most
+typical surname, paginate a 30-row QL ranking, and search for a surname. The
+selected state and ranking page persist in local storage. Ranking entries link
+to their IBGE Censo 2022 record and can be expanded; a search result opens the
+same national-detail view.
+
+The detail view reports the surname's estimated national total, the number of
+states in which it occurs, its highest-QL state, and its national population
+percentage. It also compares the top five states and lists all 27 federative
+units ordered by QL, including local frequency, population percentage, and a
+QL-based classification. The interface explains QL in a modal and handles
+loading, empty-data, and query-error states.
 
 Together, these files make the prepared census data accessible as an explorable
 state-by-state ranking while preserving the simple static deployment model.
