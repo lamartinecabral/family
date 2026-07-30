@@ -10,9 +10,9 @@
 
 - Keep the web app simple to deploy: do not introduce a bundler, build output, or a required npm build step for changes under `docs/`.
 - `docs/index.html` loads Babel Standalone, which transpiles `docs/index.tsx` in the browser with the React and TypeScript presets. Write the application as directly copy-pasteable TSX so AI-generated code can be used with minimal adaptation.
-- Browser-compatible dependency shims live in `docs/assets/`. Import React, Lucide, Supabase, and other provided browser dependencies through their local relative `.mjs` paths; do not import packages by npm name from code that runs in the browser.
-- Preserve the `type="text/babel"`, `data-type="module"`, and `data-presets="react,typescript"` configuration in `docs/index.html` unless the runtime loading approach is intentionally changed.
-- Use explicit relative file extensions for browser module imports, for example `./assets/react.mjs` and `./query.mjs`.
+- Browser-compatible dependency shims live in `docs/assets/` and are registered by the import map in `docs/index.html`. Use the mapped package names for React, React DOM, Lucide, and Supabase, and use explicit relative `.mjs` paths for local modules such as `./query.mjs`.
+- Preserve the import map and the `type="text/babel"`, `data-type="module"`, and `data-presets="react,typescript"` configuration in `docs/index.html` unless the runtime loading approach is intentionally changed.
+- Keep browser code compatible with direct Babel Standalone execution: do not add npm-only imports, bundler syntax, or a required build step for the `docs/` app.
 
 ## Local Verification
 
