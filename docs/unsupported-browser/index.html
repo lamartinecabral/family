@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nomes da Terra</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23111418'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-size='34' font-family='monospace' fill='%23f3f4ef'%3ELC%3C/text%3E%3C/svg%3E"
+    />
+    <script>
+      (function (supportedBrowser) {
+        if (supportedBrowser) location.replace("..");
+      })(
+        typeof HTMLScriptElement.supports === "function" &&
+          HTMLScriptElement.supports("module") &&
+          HTMLScriptElement.supports("importmap"),
+      );
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: #f1f5f9;
+        color: #1e293b;
+        font-family: system-ui, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      .compatibility-header {
+        border-bottom: 4px solid #fbbf24;
+        background: linear-gradient(90deg, #0f172a, #172554, #0f172a);
+        color: #fff;
+      }
+
+      .compatibility-header__inner,
+      .compatibility-content {
+        width: min(100% - 2rem, 72rem);
+        margin: 0 auto;
+      }
+
+      .compatibility-header__inner {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 1.25rem 0;
+      }
+
+      .compatibility-eyebrow {
+        margin: 0 0 0.125rem;
+        color: #fcd34d;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .compatibility-title {
+        margin: 0;
+        font-size: 1.25rem;
+        line-height: 1.25;
+      }
+
+      .compatibility-content {
+        padding: 3rem 0;
+      }
+
+      .compatibility-panel {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2rem;
+        border: 1px solid #cbd5e1;
+        border-top: 4px solid #fbbf24;
+        border-radius: 0.5rem;
+        background: #fff;
+        box-shadow: 0 4px 12px rgb(15 23 42 / 12%);
+      }
+
+      .compatibility-panel h2 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 1.5rem;
+        line-height: 1.25;
+      }
+
+      .compatibility-panel p {
+        margin: 1rem 0 0;
+        color: #475569;
+        line-height: 1.6;
+      }
+
+      .compatibility-browsers {
+        margin: 1.5rem 0 0;
+        padding: 1rem 1rem 1rem 1.25rem;
+        border-left: 3px solid #1e40af;
+        background: #eff6ff;
+        color: #1e3a8a;
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 40rem) {
+        .compatibility-content {
+          padding: 1.5rem 0;
+        }
+
+        .compatibility-panel {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="compatibility-header">
+      <div class="compatibility-header__inner">
+        <div>
+          <p class="compatibility-eyebrow">Censo Demográfico 2022</p>
+          <h1 class="compatibility-title">Nomes da Terra</h1>
+        </div>
+      </div>
+    </header>
+
+    <main class="compatibility-content">
+      <section
+        class="compatibility-panel"
+        aria-labelledby="compatibility-title"
+      >
+        <h2 id="compatibility-title">Navegador não compatível</h2>
+        <p>
+          Nomes da Terra precisa de recursos que este navegador não oferece.
+          Atualize o navegador para continuar explorando os sobrenomes mais
+          típicos de cada estado.
+        </p>
+        <p class="compatibility-browsers">
+          Use uma versão recente do Chrome, Firefox, Safari ou Edge.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
