@@ -1,9 +1,5 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  createRoot,
-} from "./assets/react.mjs";
+import React, { useState, useEffect, useMemo } from "react";
+import { createRoot } from "react-dom/client";
 
 import {
   Search,
@@ -23,7 +19,7 @@ import {
   HelpCircle,
   GitBranch,
   ExternalLink,
-} from "./assets/lucide-react.mjs";
+} from "lucide-react";
 
 import {
   queryLocalidades,

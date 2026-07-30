@@ -1,4 +1,4 @@
-import { createClient } from "./assets/supabase.mjs";
+import { createClient } from "@supabase/supabase-js";
 
 const projectId = "";
 const supabaseKey = "";
